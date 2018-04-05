@@ -1,0 +1,11 @@
+[package]
+name = "homepage"
+version = "0.1.0"
+authors = ["Kevin Watters <kevinwatters@gmail.com>"]
+
+[dependencies]
+gotham = "*"
+
+hyper = "0.11"
+futures = "0.1"
+mime = "0.3"
