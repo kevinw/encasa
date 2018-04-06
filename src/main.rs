@@ -9,6 +9,8 @@ extern crate serde;
 extern crate serde_json;
 
 use hyper::{Response, StatusCode};
+use std::fs::File;
+use std::io::Read;
 
 use gotham::http::response::create_response;
 use gotham::state::State;
@@ -21,32 +23,69 @@ struct RecordFileModificationTime
     modification_time: SystemTime
 }
 
-fn get_dummy_data() -> Task
-{
-    let one_week_seconds = 60 * 60 * 24 * 7;
-
-    let task = Task {
-        name: String::from("Journal"),
-        frequency_goal: Duration::new(one_week_seconds, 0),
-        records: Vec::new(),
-    };
-
-    task
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 struct Record
 {
-    time: SystemTime,
+    modification_time: SystemTime,
     note: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct FileState
+{
+    modification_time: SystemTime,
+    size: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct FileModificationRecords
+{
+    file_path: String,
+    modification_times: Vec<FileState>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Task {
     name: String,
     frequency_goal: Duration,
-    records: Vec<Record>,
+    records: FileModificationRecords,
 }
+
+static JOURNAL_PATH: &str = "C:\\Users\\kevin\\Dropbox\\Journal.txt";
+
+fn get_default_json() -> String
+{
+    let one_week_seconds = 60 * 60 * 24 * 7;
+
+    let task = Task {
+        name: String::from("Journal"),
+        frequency_goal: Duration::new(one_week_seconds, 0),
+        records: FileModificationRecords {
+            file_path: String::from(JOURNAL_PATH),
+            modification_times: Vec::new(),
+        },
+    };
+
+    serde_json::to_string_pretty(&task).unwrap()
+}
+
+fn get_dummy_data() -> Task
+{
+    let mut contents = String::new();
+    {
+        match File::open("data.json") {
+            Ok(mut f) => {
+                f.read_to_string(&mut contents).unwrap();
+            }
+            Err(e) => {
+                contents.push_str(get_default_json().as_str());
+            }
+        }
+    }
+
+    serde_json::from_str(&contents).unwrap()
+}
+
 
 /// Create a `Handler` which is invoked when responding to a `Request`.
 ///
@@ -55,7 +94,8 @@ struct Task {
 /// within Gotham itself.
 pub fn say_hello(state: State) -> (State, Response) {
     let task = get_dummy_data();
-    let serialized = serde_json::to_string(&task).unwrap();
+
+    let serialized = serde_json::to_string_pretty(&task).unwrap();
     let res = create_response(
         &state,
         StatusCode::Ok,
