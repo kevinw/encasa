@@ -1,6 +1,6 @@
 #[macro_use]
 extern crate serde_derive;
-
+ 
 extern crate futures;
 extern crate gotham;
 extern crate hyper;
@@ -10,41 +10,55 @@ extern crate serde_json;
 
 use hyper::{Response, StatusCode};
 use std::fs::File;
-use std::io::Read;
+use std::path::Path;
+use std::io::{Read, Write};
 
 use gotham::http::response::create_response;
 use gotham::state::State;
 
 use std::time::{Duration, SystemTime};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct RecordFileModificationTime
 {
     modification_time: SystemTime
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Record
 {
     modification_time: SystemTime,
     note: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct FileState
 {
     modification_time: SystemTime,
     size: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct FileModificationRecords
 {
     file_path: String,
     modification_times: Vec<FileState>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+fn record_mod_time(records: &mut FileModificationRecords)
+{
+    let metadata = std::fs::metadata(records.file_path.clone()).unwrap();
+
+    if Path::new(&records.file_path).exists() {
+        records.modification_times.push(FileState {
+            modification_time: metadata.modified().unwrap(),
+            size: metadata.len(),
+        })
+    }
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Task {
     name: String,
     frequency_goal: Duration,
@@ -52,6 +66,7 @@ struct Task {
 }
 
 static JOURNAL_PATH: &str = "C:\\Users\\kevin\\Dropbox\\Journal.txt";
+static DB_PATH: &str = "c:\\Users\\kevin\\homepage.json";
 
 fn get_default_json() -> String
 {
@@ -69,11 +84,24 @@ fn get_default_json() -> String
     serde_json::to_string_pretty(&task).unwrap()
 }
 
+fn munge_task(task: Task) -> Task
+{
+    if task.records.modification_times.len() == 0 {
+        println!("empty mod times");
+
+        let mut task2 = task.clone();
+        record_mod_time(&mut task2.records);
+        return task2
+    }
+
+    task
+}
+
 fn get_dummy_data() -> Task
 {
     let mut contents = String::new();
     {
-        match File::open("data.json") {
+        match File::open(DB_PATH) {
             Ok(mut f) => {
                 f.read_to_string(&mut contents).unwrap();
             }
@@ -94,12 +122,15 @@ fn get_dummy_data() -> Task
 /// within Gotham itself.
 pub fn say_hello(state: State) -> (State, Response) {
     let task = get_dummy_data();
-
+    let task = munge_task(task);
     let serialized = serde_json::to_string_pretty(&task).unwrap();
+    let serialized_bytes = serialized.into_bytes();
+    File::create(DB_PATH).unwrap().write_all(&serialized_bytes).unwrap();
+
     let res = create_response(
         &state,
         StatusCode::Ok,
-        Some((serialized.into_bytes(), mime::TEXT_PLAIN)),
+        Some((serialized_bytes, mime::TEXT_PLAIN)),
     );
 
     (state, res)
