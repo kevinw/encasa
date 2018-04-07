@@ -9,6 +9,7 @@ extern crate serde;
 extern crate serde_json;
 
 use hyper::{Response, StatusCode};
+use std::fs;
 use std::fs::File;
 use std::path::Path;
 use std::io::{Read, Write};
@@ -65,8 +66,30 @@ struct Task {
     records: FileModificationRecords,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+enum TaskType {
+    FileModification
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct TaskDescription
+{
+    name: String,
+    task_type: TaskType,
+    path: String,
+    frequency_goal: Duration,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct TaskDescriptionList
+{
+    tasks: Vec<TaskDescription>,
+}
+
 static JOURNAL_PATH: &str = "C:\\Users\\kevin\\Dropbox\\Journal.txt";
 static DB_PATH: &str = "c:\\Users\\kevin\\homepage.json";
+static DB_DIR: &str = "c:\\Users\\kevin\\.homepage";
+static TASKS_JSON_PATH: &str = "c:\\Users\\kevin\\tasks.json";
 
 fn get_default_json() -> String
 {
@@ -82,6 +105,68 @@ fn get_default_json() -> String
     };
 
     serde_json::to_string_pretty(&task).unwrap()
+}
+
+fn ensure_dir_exists(path_to_dir: &str) -> Result<(), std::io::Error>
+{
+    if Path::new(path_to_dir).exists() {
+        let metadata = fs::metadata(path_to_dir)?;
+        if !metadata.is_dir() {
+            let message = format!("{} is not a directory", path_to_dir);
+            return Err(std::io::Error::new(std::io::ErrorKind::Other, message));
+        }
+    } else {
+        fs::create_dir(path_to_dir)?;
+    }
+
+    Ok(())
+}
+
+fn get_file_contents(path: &str) -> Result<String, std::io::Error> {
+    let mut contents = String::new();
+    File::open(TASKS_JSON_PATH)?.read_to_string(&mut contents)?;
+    Ok(contents)
+}
+
+fn update_task(task: &TaskDescription) -> Result<(), std::io::Error>
+{
+    let s = serde_json::to_string_pretty(task)?;
+    println!("{}", s);
+    Ok(())
+}
+
+fn maybe_create_dummy_tasks_json() -> Result<(), std::io::Error> {
+    if !Path::new(TASKS_JSON_PATH).exists() {
+        let one_week_seconds = 60 * 60 * 24 * 7;
+        let task_list = TaskDescriptionList {
+            tasks: vec![TaskDescription {
+                name: String::from("Journal"),
+                task_type: TaskType::FileModification,
+                path: String::from(JOURNAL_PATH),
+                frequency_goal: Duration::new(one_week_seconds, 0),
+            }]
+        };
+
+        let tasks_json = serde_json::to_string_pretty(&task_list)?.into_bytes();
+        File::create(TASKS_JSON_PATH)?.write_all(&tasks_json)?;
+    }
+
+    Ok(())
+}
+
+fn update() -> Result<(), std::io::Error>
+{
+    maybe_create_dummy_tasks_json()?;
+
+    let task_list: TaskDescriptionList = 
+        serde_json::from_str(&get_file_contents(TASKS_JSON_PATH)?)?;
+
+    for task in task_list.tasks.iter() {
+        update_task(task)?;
+    }
+
+    ensure_dir_exists(DB_DIR)?;
+    Ok(())
 }
 
 fn munge_task(task: Task) -> Task
@@ -105,7 +190,7 @@ fn get_dummy_data() -> Task
             Ok(mut f) => {
                 f.read_to_string(&mut contents).unwrap();
             }
-            Err(e) => {
+            Err(_e) => {
                 contents.push_str(get_default_json().as_str());
             }
         }
@@ -121,6 +206,19 @@ fn get_dummy_data() -> Task
 /// We've simply implemented the `Handler` trait, for functions that match the signature used here,
 /// within Gotham itself.
 pub fn say_hello(state: State) -> (State, Response) {
+    match update() {
+        Ok(_) => {},
+        Err(e) => {
+            let err_str = format!("{}", e);
+            let error_resp = create_response(
+                &state,
+                StatusCode::InternalServerError,
+                Some((err_str.into_bytes(), mime::TEXT_PLAIN))
+            );
+            return (state, error_resp);
+        }
+    }
+
     let task = get_dummy_data();
     let task = munge_task(task);
     let serialized = serde_json::to_string_pretty(&task).unwrap();
