@@ -13,4 +13,6 @@ mime = "0.3"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
+serde_yaml = "*"
 
+todo-txt = "*"

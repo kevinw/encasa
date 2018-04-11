@@ -1,20 +1,10 @@
-goal
-----
+# HOMEPAGE
 
 a personal new tab page for getting shit done
 
-show last modification time for journal as "it's been 3 days since you wrote to Journal.txt, and your goal is once every two days!"
+see TODO.txt
 
-show "days until" specific google calendar events
-
-show TODO.txt
-
-
-
-
-types
-
----
+## types
 
 record: last file modification time
 record type: manual
