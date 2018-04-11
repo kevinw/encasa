@@ -14,10 +14,11 @@ extern crate serde_yaml;
 extern crate shellexpand;
 
 use hyper::{Response, StatusCode};
+use ::std::str::FromStr;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
-use std::io::{Read, Write};
+use std::io::{Read, Write, BufReader, BufRead};
 
 use gotham::http::response::create_response;
 use gotham::state::State;
@@ -132,6 +133,23 @@ fn get_file_contents(path: &str) -> Result<String, std::io::Error> {
     let mut contents = String::new();
     File::open(path)?.read_to_string(&mut contents)?;
     Ok(contents)
+}
+
+fn parse_todo_file(path: &str) -> Result<Vec<::todo_txt::Task>, std::io::Error> {
+    let mut tasks:Vec<::todo_txt::Task> = vec!();
+    for (num, line) in BufReader::new(File::open(path)?).lines().enumerate() {
+        match todo_txt::Task::from_str(&line?) {
+            Ok(task) => {
+                //println!("    {}", task);
+                tasks.push(task);
+            }
+            Err(_) => {
+                eprintln!("    <ERROR parsing todo on line {}>", num);
+            }
+        }
+    }
+
+    Ok(tasks)
 }
 
 fn update_task(task: &TaskDescription) -> Result<(), std::io::Error>
@@ -270,15 +288,6 @@ mod tests {
         //assert_eq!(&body[..], b"Hello World!");
     }
 
-    use ::std::str::FromStr;
-
-    #[test]
-    fn parse_todo() {
-        let line = "x (A) 2016-05-20 2016-04-30 measure space for +chapelShelving @chapel due:2016-05-30";
-        let task = ::todo_txt::Task::from_str(line);
-        eprintln!("TASK: {:#?}", task);
-    }
-
     #[derive(Serialize, Deserialize, Debug, Clone)]
     struct HomepageMeta {
         local: Vec<LocalFileDesc>,
@@ -295,15 +304,17 @@ mod tests {
     #[test]
     fn parse_new_yaml() {
         fn foo() -> Result<(), ::std::io::Error> {
-            let meta: HomepageMeta = 
-                serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?).unwrap();
-
-            println!("meta: {:?}", meta);
-            println!("{}", serde_yaml::to_string(&meta).unwrap());
+            let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?).unwrap();
 
             for local_file in meta.local {
                 let path = shellexpand::tilde(&local_file.path);
-                println!("local file: {}", path);
+                if local_file.todos {
+                    let todos = parse_todo_file(&path)?;
+                    println!("{} total todos in {}", todos.len(), path);
+                }
+                if local_file.frequency_goal_seconds > 0 {
+                    println!("frequency goal for {}: {}", path, local_file.frequency_goal_seconds);
+                }
             }
 
             Ok(())

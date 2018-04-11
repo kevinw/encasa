@@ -1,3 +1,6 @@
+show deadlines on todos
+add a "view config" section
+use https://github.com/borisyankov/react-sparklines for todo files, file sizes
 show TODO.txt
 allow reading todo lists from multiple files--podcast todo, life todo, project todos, etc.
 show "days until" specific google calendar events
