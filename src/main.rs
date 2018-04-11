@@ -11,6 +11,8 @@ extern crate serde;
 extern crate serde_json;
 extern crate serde_yaml;
 
+extern crate shellexpand;
+
 use hyper::{Response, StatusCode};
 use std::fs;
 use std::fs::File;
@@ -296,9 +298,13 @@ mod tests {
             let meta: HomepageMeta = 
                 serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?).unwrap();
 
-
             println!("meta: {:?}", meta);
             println!("{}", serde_yaml::to_string(&meta).unwrap());
+
+            for local_file in meta.local {
+                let path = shellexpand::tilde(&local_file.path);
+                println!("local file: {}", path);
+            }
 
             Ok(())
         }

@@ -16,3 +16,5 @@ serde_json = "*"
 serde_yaml = "*"
 
 todo-txt = "*"
+
+shellexpand = "*"
