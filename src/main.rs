@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate serde_derive;
+
+extern crate todo_txt;
  
 extern crate futures;
 extern crate gotham;
@@ -7,6 +9,7 @@ extern crate hyper;
 extern crate mime;
 extern crate serde;
 extern crate serde_json;
+extern crate serde_yaml;
 
 use hyper::{Response, StatusCode};
 use std::fs;
@@ -90,6 +93,7 @@ static JOURNAL_PATH: &str = "C:\\Users\\kevin\\Dropbox\\Journal.txt";
 static DB_PATH: &str = "c:\\Users\\kevin\\homepage.json";
 static DB_DIR: &str = "c:\\Users\\kevin\\.homepage";
 static TASKS_JSON_PATH: &str = "c:\\Users\\kevin\\tasks.json";
+static META_YAML_PATH: &str = "c:\\Users\\kevin\\homepage.yaml";
 
 fn get_default_json() -> String
 {
@@ -124,7 +128,7 @@ fn ensure_dir_exists(path_to_dir: &str) -> Result<(), std::io::Error>
 
 fn get_file_contents(path: &str) -> Result<String, std::io::Error> {
     let mut contents = String::new();
-    File::open(TASKS_JSON_PATH)?.read_to_string(&mut contents)?;
+    File::open(path)?.read_to_string(&mut contents)?;
     Ok(contents)
 }
 
@@ -132,6 +136,7 @@ fn update_task(task: &TaskDescription) -> Result<(), std::io::Error>
 {
     let s = serde_json::to_string_pretty(task)?;
     println!("{}", s);
+
     Ok(())
 }
 
@@ -161,11 +166,12 @@ fn update() -> Result<(), std::io::Error>
     let task_list: TaskDescriptionList = 
         serde_json::from_str(&get_file_contents(TASKS_JSON_PATH)?)?;
 
+    ensure_dir_exists(DB_DIR)?;
+
     for task in task_list.tasks.iter() {
         update_task(task)?;
     }
 
-    ensure_dir_exists(DB_DIR)?;
     Ok(())
 }
 
@@ -258,6 +264,45 @@ mod tests {
         assert_eq!(response.status(), StatusCode::Ok);
 
         let body = response.read_body().unwrap();
-        assert_eq!(&body[..], b"Hello World!");
+        assert!(body.len() > 0);
+        //assert_eq!(&body[..], b"Hello World!");
+    }
+
+    use ::std::str::FromStr;
+
+    #[test]
+    fn parse_todo() {
+        let line = "x (A) 2016-05-20 2016-04-30 measure space for +chapelShelving @chapel due:2016-05-30";
+        let task = ::todo_txt::Task::from_str(line);
+        eprintln!("TASK: {:#?}", task);
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    struct HomepageMeta {
+        local: Vec<LocalFileDesc>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    struct LocalFileDesc {
+        id: String,
+        path: String,
+        #[serde(default)] todos: bool,
+        #[serde(default)] frequency_goal_seconds: u64,
+    }
+
+    #[test]
+    fn parse_new_yaml() {
+        fn foo() -> Result<(), ::std::io::Error> {
+            let meta: HomepageMeta = 
+                serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?).unwrap();
+
+
+            println!("meta: {:?}", meta);
+            println!("{}", serde_yaml::to_string(&meta).unwrap());
+
+            Ok(())
+        }
+
+        foo().unwrap();
     }
 }
