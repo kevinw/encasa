@@ -1,4 +1,7 @@
+social checkins
+try rust-wasm clientside framework https://github.com/DenisKolodin/yew
 show deadlines on todos
+last git commit as "last modified" date
 add a "view config" section
 use https://github.com/borisyankov/react-sparklines for todo files, file sizes
 show TODO.txt

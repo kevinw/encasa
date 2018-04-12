@@ -17,7 +17,7 @@ use hyper::{Response, StatusCode};
 use ::std::str::FromStr;
 use std::fs;
 use std::fs::File;
-use std::path::Path;
+use std::path::{Path};
 use std::io::{Read, Write, BufReader, BufRead};
 
 use gotham::http::response::create_response;
@@ -38,7 +38,7 @@ struct Record
     note: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct FileState
 {
     modification_time: SystemTime,
@@ -52,13 +52,23 @@ struct FileModificationRecords
     modification_times: Vec<FileState>,
 }
 
+impl FileState {
+    fn from(metadata: std::fs::Metadata) -> FileState {
+        FileState {
+            modification_time: metadata.modified().unwrap(),
+            size: metadata.len(),
+        }
+    }
+}
+
 fn record_mod_time(records: &mut FileModificationRecords)
 {
     let metadata = std::fs::metadata(records.file_path.clone()).unwrap();
 
     if Path::new(&records.file_path).exists() {
         records.modification_times.push(FileState {
-            modification_time: metadata.modified().unwrap(),
+            modification_time: metadata.modified().expect(
+               &format!("could not get modification time of {}", records.file_path)),
             size: metadata.len(),
         })
     }
@@ -131,7 +141,7 @@ fn ensure_dir_exists(path_to_dir: &str) -> Result<(), std::io::Error>
 
 fn get_file_contents(path: &str) -> Result<String, std::io::Error> {
     let mut contents = String::new();
-    File::open(path)?.read_to_string(&mut contents)?;
+    BufReader::new(File::open(path)?).read_to_string(&mut contents)?;
     Ok(contents)
 }
 
@@ -226,12 +236,127 @@ fn get_dummy_data() -> Task
 }
 
 
+fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
+    // Create empty YAML file if it's not there.
+    let meta_path_str: String;
+    {
+        let mut meta_path = String::from(path);
+        meta_path.push_str(".meta.yaml");
+        meta_path_str = String::from(meta_path); // meta_path.to_str().expect("path was not valid utf8"));
+    }
+
+    if !Path::new(&meta_path_str).exists() {
+        let empty_file_state_cache = FileStateCache { states: vec![] };
+        let serialized_bytes = serde_yaml::to_string(&empty_file_state_cache)
+            .expect("failed turning fresh FileStateCache to YAML").into_bytes();
+        File::create(&meta_path_str)
+            .expect(&format!("could not create .metadata.yaml file at {}", meta_path_str))
+            .write_all(&serialized_bytes)?;
+
+        println!("created file at {}", &meta_path_str);
+    }
+
+    // Now that it's there, parse it
+    let contents = &get_file_contents(&meta_path_str)?;
+    let mut history : FileStateCache = serde_yaml::from_str(contents)
+        .expect(&format!("YAML has invalid structure: '{}'", meta_path_str));
+
+    // Update it if the file has changed.
+    let file_state = FileState::from(std::fs::metadata(path)?);
+
+    if history.states.len() == 0 || history.states[history.states.len() - 1] != file_state {
+        history.states.push(file_state);
+
+        let new_yaml = serde_yaml::to_string(&history)
+            .expect("could not convert FileStateCache to YAML").into_bytes();
+
+        File::create(&meta_path_str)?.write_all(&new_yaml)
+            .expect(&format!("could not write to {}", meta_path_str));
+    }
+
+    Ok(history)
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HomepageMeta {
+    local: Vec<LocalFileDesc>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct LocalFileDesc {
+    id: String,
+    path: String,
+    #[serde(default)] todos: bool,
+    #[serde(default)] frequency_goal_seconds: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct FileStateCache {
+    states: Vec<FileState>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct CachedData
+{
+    last_update: SystemTime,
+}
+
+fn update_data() -> Result<(), ::std::io::Error> {
+    let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?).unwrap();
+
+    for local_file in meta.local {
+        let path = shellexpand::tilde(&local_file.path);
+        if local_file.todos {
+            let todos = parse_todo_file(&path)?;
+            println!("{} total todos in {}", todos.len(), path);
+        }
+        if local_file.frequency_goal_seconds > 0 {
+            println!("frequency goal for {}: {}", path, local_file.frequency_goal_seconds);
+            let history = update_file_history(&path).unwrap();
+            assert!(history.states.len() > 0);
+            let last_state = &history.states[history.states.len() - 1];
+            println!("last mod time {:?} for {}", last_state.modification_time, path);
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gotham::test::TestServer;
+
+    #[test]
+    fn receive_hello_world_response() {
+        let test_server = TestServer::new(|| Ok(say_hello)).unwrap();
+        let response = test_server
+            .client()
+            .get("http://localhost")
+            .perform()
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::Ok);
+
+        let body = response.read_body().unwrap();
+        assert!(body.len() > 0);
+        //assert_eq!(&body[..], b"Hello World!");
+    }
+
+    #[test]
+    fn parse_new_yaml() {
+        update_data().expect("update_data failed");
+    }
+}
+
+
 /// Create a `Handler` which is invoked when responding to a `Request`.
 ///
 /// How does a function become a `Handler`?.
 /// We've simply implemented the `Handler` trait, for functions that match the signature used here,
 /// within Gotham itself.
 pub fn say_hello(state: State) -> (State, Response) {
+    update_data().unwrap();
     match update() {
         Ok(_) => {},
         Err(e) => {
@@ -267,59 +392,3 @@ pub fn main() {
     gotham::start(addr, || Ok(say_hello))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use gotham::test::TestServer;
-
-    #[test]
-    fn receive_hello_world_response() {
-        let test_server = TestServer::new(|| Ok(say_hello)).unwrap();
-        let response = test_server
-            .client()
-            .get("http://localhost")
-            .perform()
-            .unwrap();
-
-        assert_eq!(response.status(), StatusCode::Ok);
-
-        let body = response.read_body().unwrap();
-        assert!(body.len() > 0);
-        //assert_eq!(&body[..], b"Hello World!");
-    }
-
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    struct HomepageMeta {
-        local: Vec<LocalFileDesc>,
-    }
-
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    struct LocalFileDesc {
-        id: String,
-        path: String,
-        #[serde(default)] todos: bool,
-        #[serde(default)] frequency_goal_seconds: u64,
-    }
-
-    #[test]
-    fn parse_new_yaml() {
-        fn foo() -> Result<(), ::std::io::Error> {
-            let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?).unwrap();
-
-            for local_file in meta.local {
-                let path = shellexpand::tilde(&local_file.path);
-                if local_file.todos {
-                    let todos = parse_todo_file(&path)?;
-                    println!("{} total todos in {}", todos.len(), path);
-                }
-                if local_file.frequency_goal_seconds > 0 {
-                    println!("frequency goal for {}: {}", path, local_file.frequency_goal_seconds);
-                }
-            }
-
-            Ok(())
-        }
-
-        foo().unwrap();
-    }
-}
