@@ -150,11 +150,12 @@ fn parse_todo_file(path: &str) -> Result<Vec<::todo_txt::Task>, std::io::Error> 
     for (num, line) in BufReader::new(File::open(path)?).lines().enumerate() {
         match todo_txt::Task::from_str(&line?) {
             Ok(task) => {
-                //println!("    {}", task);
-                tasks.push(task);
-            }
+                if task.subject.len() > 0 {
+                    tasks.push(task);
+                }
+            },
             Err(_) => {
-                eprintln!("    <ERROR parsing todo on line {}>", num);
+                eprintln!("ERROR parsing todo in {}:{}", path, num);
             }
         }
     }
