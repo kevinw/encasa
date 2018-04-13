@@ -1,4 +1,8 @@
+festival submissions for things like http://virtualrealityla.com/
+TO READ folder on desktop--treat some folders as a TODO list in themselves
 social checkins
+event submission deadlines
+random quotes? (brainstorm more random things)
 try rust-wasm clientside framework https://github.com/DenisKolodin/yew
 show deadlines on todos
 last git commit as "last modified" date

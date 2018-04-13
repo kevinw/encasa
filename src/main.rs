@@ -1,5 +1,5 @@
-#[macro_use]
-extern crate serde_derive;
+#[macro_use] extern crate serde_derive;
+#[macro_use] extern crate askama;
 
 extern crate todo_txt;
  
@@ -23,7 +23,9 @@ use std::io::{Read, Write, BufReader, BufRead};
 use gotham::http::response::create_response;
 use gotham::state::State;
 
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
+
+mod view;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct RecordFileModificationTime
@@ -61,6 +63,7 @@ impl FileState {
     }
 }
 
+/*
 fn record_mod_time(records: &mut FileModificationRecords)
 {
     let metadata = std::fs::metadata(records.file_path.clone()).unwrap();
@@ -101,13 +104,15 @@ struct TaskDescriptionList
 {
     tasks: Vec<TaskDescription>,
 }
+*/
 
-static JOURNAL_PATH: &str = "C:\\Users\\kevin\\Dropbox\\Journal.txt";
-static DB_PATH: &str = "c:\\Users\\kevin\\homepage.json";
-static DB_DIR: &str = "c:\\Users\\kevin\\.homepage";
-static TASKS_JSON_PATH: &str = "c:\\Users\\kevin\\tasks.json";
+//static JOURNAL_PATH: &str = "C:\\Users\\kevin\\Dropbox\\Journal.txt";
+//static DB_PATH: &str = "c:\\Users\\kevin\\homepage.json";
+//static DB_DIR: &str = "c:\\Users\\kevin\\.homepage";
+//static TASKS_JSON_PATH: &str = "c:\\Users\\kevin\\tasks.json";
 static META_YAML_PATH: &str = "c:\\Users\\kevin\\homepage.yaml";
 
+/*
 fn get_default_json() -> String
 {
     let one_week_seconds = 60 * 60 * 24 * 7;
@@ -123,8 +128,9 @@ fn get_default_json() -> String
 
     serde_json::to_string_pretty(&task).unwrap()
 }
+*/
 
-fn ensure_dir_exists(path_to_dir: &str) -> Result<(), std::io::Error>
+fn _ensure_dir_exists(path_to_dir: &str) -> Result<(), std::io::Error>
 {
     if Path::new(path_to_dir).exists() {
         let metadata = fs::metadata(path_to_dir)?;
@@ -163,6 +169,7 @@ fn parse_todo_file(path: &str) -> Result<Vec<::todo_txt::Task>, std::io::Error> 
     Ok(tasks)
 }
 
+/*
 fn update_task(task: &TaskDescription) -> Result<(), std::io::Error>
 {
     let s = serde_json::to_string_pretty(task)?;
@@ -235,7 +242,7 @@ fn get_dummy_data() -> Task
 
     serde_json::from_str(&contents).unwrap()
 }
-
+*/
 
 fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
     // Create empty YAML file if it's not there.
@@ -297,18 +304,21 @@ struct FileStateCache {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct CachedData
+pub struct CachedData
 {
     last_update: SystemTime,
+    todos_count: usize,
 }
 
-fn update_data() -> Result<(), ::std::io::Error> {
+fn update_data() -> Result<CachedData, ::std::io::Error> {
     let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?).unwrap();
+    let mut todos_count:usize = 0;
 
     for local_file in meta.local {
         let path = shellexpand::tilde(&local_file.path);
         if local_file.todos {
             let todos = parse_todo_file(&path)?;
+            todos_count += todos.len();
             println!("{} total todos in {}", todos.len(), path);
         }
         if local_file.frequency_goal_seconds > 0 {
@@ -320,7 +330,10 @@ fn update_data() -> Result<(), ::std::io::Error> {
         }
     }
 
-    Ok(())
+    Ok(CachedData {
+        last_update: SystemTime::now(),
+        todos_count,
+    })
 }
 
 #[cfg(test)]
@@ -357,7 +370,11 @@ mod tests {
 /// We've simply implemented the `Handler` trait, for functions that match the signature used here,
 /// within Gotham itself.
 pub fn say_hello(state: State) -> (State, Response) {
-    update_data().unwrap();
+    let cached_data = update_data().unwrap();
+    let serialized = serde_json::to_string_pretty(&cached_data).unwrap();
+    /*
+    let serialized_bytes = serialized.into_bytes();
+
     match update() {
         Ok(_) => {},
         Err(e) => {
@@ -376,11 +393,14 @@ pub fn say_hello(state: State) -> (State, Response) {
     let serialized = serde_json::to_string_pretty(&task).unwrap();
     let serialized_bytes = serialized.into_bytes();
     File::create(DB_PATH).unwrap().write_all(&serialized_bytes).unwrap();
+    */
+
+    let html = view::render(&cached_data, &serialized);
+    let html_bytes = html.into_bytes();
 
     let res = create_response(
-        &state,
-        StatusCode::Ok,
-        Some((serialized_bytes, mime::TEXT_PLAIN)),
+        &state, StatusCode::Ok,
+        Some((html_bytes, mime::TEXT_HTML)),
     );
 
     (state, res)
