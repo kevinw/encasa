@@ -2,7 +2,6 @@
 #[macro_use] extern crate askama;
 
 extern crate todo_txt;
- 
 extern crate futures;
 extern crate gotham;
 extern crate hyper;
@@ -10,7 +9,6 @@ extern crate mime;
 extern crate serde;
 extern crate serde_json;
 extern crate serde_yaml;
-
 extern crate shellexpand;
 
 use hyper::{Response, StatusCode};
@@ -26,6 +24,8 @@ use gotham::state::State;
 use std::time::SystemTime;
 
 mod view;
+
+static META_YAML_PATH: &str = "c:\\Users\\kevin\\homepage.yaml";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct RecordFileModificationTime
@@ -54,6 +54,33 @@ struct FileModificationRecords
     modification_times: Vec<FileState>,
 }
 
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HomepageMeta {
+    local: Vec<LocalFileDesc>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct LocalFileDesc {
+    id: String,
+    path: String,
+    #[serde(default)] todos: bool,
+    #[serde(default)] frequency_goal_seconds: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct FileStateCache {
+    states: Vec<FileState>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CachedData
+{
+    last_update: SystemTime,
+    todos_count: usize,
+}
+
+
 impl FileState {
     fn from(metadata: std::fs::Metadata) -> FileState {
         FileState {
@@ -62,73 +89,6 @@ impl FileState {
         }
     }
 }
-
-/*
-fn record_mod_time(records: &mut FileModificationRecords)
-{
-    let metadata = std::fs::metadata(records.file_path.clone()).unwrap();
-
-    if Path::new(&records.file_path).exists() {
-        records.modification_times.push(FileState {
-            modification_time: metadata.modified().expect(
-               &format!("could not get modification time of {}", records.file_path)),
-            size: metadata.len(),
-        })
-    }
-}
-
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct Task {
-    name: String,
-    frequency_goal: Duration,
-    records: FileModificationRecords,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-enum TaskType {
-    FileModification
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct TaskDescription
-{
-    name: String,
-    task_type: TaskType,
-    path: String,
-    frequency_goal: Duration,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct TaskDescriptionList
-{
-    tasks: Vec<TaskDescription>,
-}
-*/
-
-//static JOURNAL_PATH: &str = "C:\\Users\\kevin\\Dropbox\\Journal.txt";
-//static DB_PATH: &str = "c:\\Users\\kevin\\homepage.json";
-//static DB_DIR: &str = "c:\\Users\\kevin\\.homepage";
-//static TASKS_JSON_PATH: &str = "c:\\Users\\kevin\\tasks.json";
-static META_YAML_PATH: &str = "c:\\Users\\kevin\\homepage.yaml";
-
-/*
-fn get_default_json() -> String
-{
-    let one_week_seconds = 60 * 60 * 24 * 7;
-
-    let task = Task {
-        name: String::from("Journal"),
-        frequency_goal: Duration::new(one_week_seconds, 0),
-        records: FileModificationRecords {
-            file_path: String::from(JOURNAL_PATH),
-            modification_times: Vec::new(),
-        },
-    };
-
-    serde_json::to_string_pretty(&task).unwrap()
-}
-*/
 
 fn _ensure_dir_exists(path_to_dir: &str) -> Result<(), std::io::Error>
 {
@@ -169,81 +129,6 @@ fn parse_todo_file(path: &str) -> Result<Vec<::todo_txt::Task>, std::io::Error> 
     Ok(tasks)
 }
 
-/*
-fn update_task(task: &TaskDescription) -> Result<(), std::io::Error>
-{
-    let s = serde_json::to_string_pretty(task)?;
-    println!("{}", s);
-
-    Ok(())
-}
-
-fn maybe_create_dummy_tasks_json() -> Result<(), std::io::Error> {
-    if !Path::new(TASKS_JSON_PATH).exists() {
-        let one_week_seconds = 60 * 60 * 24 * 7;
-        let task_list = TaskDescriptionList {
-            tasks: vec![TaskDescription {
-                name: String::from("Journal"),
-                task_type: TaskType::FileModification,
-                path: String::from(JOURNAL_PATH),
-                frequency_goal: Duration::new(one_week_seconds, 0),
-            }]
-        };
-
-        let tasks_json = serde_json::to_string_pretty(&task_list)?.into_bytes();
-        File::create(TASKS_JSON_PATH)?.write_all(&tasks_json)?;
-    }
-
-    Ok(())
-}
-
-fn update() -> Result<(), std::io::Error>
-{
-    maybe_create_dummy_tasks_json()?;
-
-    let task_list: TaskDescriptionList = 
-        serde_json::from_str(&get_file_contents(TASKS_JSON_PATH)?)?;
-
-    ensure_dir_exists(DB_DIR)?;
-
-    for task in task_list.tasks.iter() {
-        update_task(task)?;
-    }
-
-    Ok(())
-}
-
-fn munge_task(task: Task) -> Task
-{
-    if task.records.modification_times.len() == 0 {
-        println!("empty mod times");
-
-        let mut task2 = task.clone();
-        record_mod_time(&mut task2.records);
-        return task2
-    }
-
-    task
-}
-
-fn get_dummy_data() -> Task
-{
-    let mut contents = String::new();
-    {
-        match File::open(DB_PATH) {
-            Ok(mut f) => {
-                f.read_to_string(&mut contents).unwrap();
-            }
-            Err(_e) => {
-                contents.push_str(get_default_json().as_str());
-            }
-        }
-    }
-
-    serde_json::from_str(&contents).unwrap()
-}
-*/
-
 fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
     // Create empty YAML file if it's not there.
     let meta_path_str: String;
@@ -283,31 +168,6 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
     }
 
     Ok(history)
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HomepageMeta {
-    local: Vec<LocalFileDesc>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct LocalFileDesc {
-    id: String,
-    path: String,
-    #[serde(default)] todos: bool,
-    #[serde(default)] frequency_goal_seconds: u64,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct FileStateCache {
-    states: Vec<FileState>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CachedData
-{
-    last_update: SystemTime,
-    todos_count: usize,
 }
 
 fn update_data() -> Result<CachedData, ::std::io::Error> {
@@ -354,7 +214,6 @@ mod tests {
 
         let body = response.read_body().unwrap();
         assert!(body.len() > 0);
-        //assert_eq!(&body[..], b"Hello World!");
     }
 
     #[test]
@@ -372,28 +231,6 @@ mod tests {
 pub fn say_hello(state: State) -> (State, Response) {
     let cached_data = update_data().unwrap();
     let serialized = serde_json::to_string_pretty(&cached_data).unwrap();
-    /*
-    let serialized_bytes = serialized.into_bytes();
-
-    match update() {
-        Ok(_) => {},
-        Err(e) => {
-            let err_str = format!("{}", e);
-            let error_resp = create_response(
-                &state,
-                StatusCode::InternalServerError,
-                Some((err_str.into_bytes(), mime::TEXT_PLAIN))
-            );
-            return (state, error_resp);
-        }
-    }
-
-    let task = get_dummy_data();
-    let task = munge_task(task);
-    let serialized = serde_json::to_string_pretty(&task).unwrap();
-    let serialized_bytes = serialized.into_bytes();
-    File::create(DB_PATH).unwrap().write_all(&serialized_bytes).unwrap();
-    */
 
     let html = view::render(&cached_data, &serialized);
     let html_bytes = html.into_bytes();
