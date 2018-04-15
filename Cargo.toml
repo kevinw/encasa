@@ -20,7 +20,15 @@ serde_derive = "*"
 serde_json = "*"
 serde_yaml = "*"
 
-todo-txt = "*"
+chrono = { version = "*", features = ["serde"] }
 
 shellexpand = "*"
 
+[dependencies.nom]
+version = "^3.2"
+
+[dependencies.lazy_static]
+version = "1.0.0"
+
+[dependencies.regex]
+version = "^0.2"

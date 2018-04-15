@@ -13,3 +13,4 @@ allow reading todo lists from multiple files--podcast todo, life todo, project t
 show "days until" specific google calendar events
 show last modification time for journal as "it's been 3 days since you wrote to Journal.txt, and your goal is once every two days!"
 trello?
+@read this is a test

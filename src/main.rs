@@ -1,7 +1,9 @@
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate askama;
 
-extern crate todo_txt;
+extern crate chrono;
 extern crate futures;
 extern crate gotham;
 extern crate hyper;
@@ -10,6 +12,17 @@ extern crate serde;
 extern crate serde_json;
 extern crate serde_yaml;
 extern crate shellexpand;
+
+#[macro_use] extern crate lazy_static;
+#[macro_use] extern crate nom;
+extern crate regex;
+
+mod view;
+mod todo;
+
+use todo::Task;
+
+pub use chrono::NaiveDate as Date;
 
 use hyper::{Response, StatusCode};
 use ::std::str::FromStr;
@@ -22,8 +35,6 @@ use gotham::http::response::create_response;
 use gotham::state::State;
 
 use std::time::SystemTime;
-
-mod view;
 
 static META_YAML_PATH: &str = "c:\\Users\\kevin\\homepage.yaml";
 
@@ -61,7 +72,7 @@ struct HomepageMeta {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct LocalFileDesc {
+pub struct LocalFileDesc {
     id: String,
     path: String,
     #[serde(default)] todos: bool,
@@ -78,11 +89,12 @@ pub struct CachedData
 {
     last_update: SystemTime,
     todos_count: usize,
+    todos: Vec<Task>,
+    local_files: Vec<LocalFileDesc>,
 }
 
-
 impl FileState {
-    fn from(metadata: std::fs::Metadata) -> FileState {
+    fn from(metadata: &std::fs::Metadata) -> FileState {
         FileState {
             modification_time: metadata.modified().unwrap(),
             size: metadata.len(),
@@ -111,12 +123,12 @@ fn get_file_contents(path: &str) -> Result<String, std::io::Error> {
     Ok(contents)
 }
 
-fn parse_todo_file(path: &str) -> Result<Vec<::todo_txt::Task>, std::io::Error> {
-    let mut tasks:Vec<::todo_txt::Task> = vec!();
+fn parse_todo_file(path: &str) -> Result<Vec<Task>, std::io::Error> {
+    let mut tasks:Vec<Task> = vec!();
     for (num, line) in BufReader::new(File::open(path)?).lines().enumerate() {
-        match todo_txt::Task::from_str(&line?) {
+        match Task::from_str(&line?) {
             Ok(task) => {
-                if task.subject.len() > 0 {
+                if !task.subject.is_empty() {
                     tasks.push(task);
                 }
             },
@@ -135,7 +147,7 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
     {
         let mut meta_path = String::from(path);
         meta_path.push_str(".meta.yaml");
-        meta_path_str = String::from(meta_path); // meta_path.to_str().expect("path was not valid utf8"));
+        meta_path_str = meta_path; // meta_path.to_str().expect("path was not valid utf8"));
     }
 
     if !Path::new(&meta_path_str).exists() {
@@ -155,9 +167,10 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
         .expect(&format!("YAML has invalid structure: '{}'", meta_path_str));
 
     // Update it if the file has changed.
-    let file_state = FileState::from(std::fs::metadata(path)?);
+    let md = std::fs::metadata(path)?;
+    let file_state = FileState::from(&md);
 
-    if history.states.len() == 0 || history.states[history.states.len() - 1] != file_state {
+    if history.states.is_empty() || history.states[history.states.len() - 1] != file_state {
         history.states.push(file_state);
 
         let new_yaml = serde_yaml::to_string(&history)
@@ -171,20 +184,26 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
 }
 
 fn update_data() -> Result<CachedData, ::std::io::Error> {
-    let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?).unwrap();
-    let mut todos_count:usize = 0;
+    let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
+        .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH));
 
-    for local_file in meta.local {
+    let mut todos_count:usize = 0;
+    let mut all_todos:Vec<Task> = vec![];
+
+    for local_file in &meta.local {
         let path = shellexpand::tilde(&local_file.path);
         if local_file.todos {
             let todos = parse_todo_file(&path)?;
             todos_count += todos.len();
             println!("{} total todos in {}", todos.len(), path);
+            for todo in &todos {
+                all_todos.push(todo.clone());
+            }
         }
         if local_file.frequency_goal_seconds > 0 {
             println!("frequency goal for {}: {}", path, local_file.frequency_goal_seconds);
-            let history = update_file_history(&path).unwrap();
-            assert!(history.states.len() > 0);
+            let history = update_file_history(&path)?;
+            assert!(!history.states.is_empty());
             let last_state = &history.states[history.states.len() - 1];
             println!("last mod time {:?} for {}", last_state.modification_time, path);
         }
@@ -193,6 +212,8 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
     Ok(CachedData {
         last_update: SystemTime::now(),
         todos_count,
+        todos: all_todos,
+        local_files: meta.local.clone(),
     })
 }
 
@@ -218,16 +239,12 @@ mod tests {
 
     #[test]
     fn parse_new_yaml() {
-        update_data().expect("update_data failed");
+        let cached_data = update_data().expect("update_data failed");
+        let json = serde_json::to_string_pretty(&cached_data).unwrap();
+        println!("{}", json);
     }
 }
 
-
-/// Create a `Handler` which is invoked when responding to a `Request`.
-///
-/// How does a function become a `Handler`?.
-/// We've simply implemented the `Handler` trait, for functions that match the signature used here,
-/// within Gotham itself.
 pub fn say_hello(state: State) -> (State, Response) {
     let cached_data = update_data().unwrap();
     let serialized = serde_json::to_string_pretty(&cached_data).unwrap();
@@ -243,10 +260,8 @@ pub fn say_hello(state: State) -> (State, Response) {
     (state, res)
 }
 
-/// Start a server and call the `Handler` we've defined above for each `Request` we receive.
 pub fn main() {
     let addr = "127.0.0.1:7878";
     println!("Listening for requests at http://{}", addr);
     gotham::start(addr, || Ok(say_hello))
 }
-

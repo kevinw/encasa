@@ -2,14 +2,33 @@
 <html>
 <head>
   <title>&#x1f3e1;</title>
+  <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet"> 
+  <style>
+    body {
+      font-family: 'Oswald', sans-serif;
+    }
+  </style>
 </head>
 <body>
 
   <h1>{{ todos_count }} TODOs</h1>
 
-<pre>
+  <ul>
+  {% for local_file in local_files %}
+  <li>{{ local_file.path }}</li>
+  {% endfor %}
+  </ul>
+
+
+  <ul>
+  {% for todo in todos %}
+  <li>{{ todo.subject }}</li>
+  {% endfor %}
+  </ul>
+
+  <pre>
 {{ json_dump }}
-</pre>
+  </pre>
 
 </body>
 </html>
