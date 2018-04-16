@@ -22,7 +22,7 @@
 
   <ul>
   {% for local_file in local_files %}
-  <li><a href="editlocal://{{ local_file.path }}">{{ local_file.path }}</a></li>
+  <li><a href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.path }}</a></li>
   {% endfor %}
   </ul>
 
@@ -30,7 +30,7 @@
   {% for todo in todos %}
   <li>
     <input type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.calc_hash() }}"{% if todo.finished %} checked{% endif %}>
-    <label for="todo-{{- loop.index0 }}">{{ todo.subject|mytrim }}</label>
+    <label for="todo-{{- loop.index0 }}">{{ todo.subject }}</label>
   </li>
   {% endfor %}
   </ul>

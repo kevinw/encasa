@@ -97,12 +97,18 @@ struct FileStateCache {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LocalFileDescWithState {
+    desc: LocalFileDesc,
+    states: Vec<FileState>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CachedData
 {
     last_update: SystemTime,
     todos_count: usize,
     todos: Vec<Task>,
-    local_files: Vec<LocalFileDesc>,
+    local_files: Vec<LocalFileDescWithState>,
 }
 
 impl FileState {
@@ -202,8 +208,11 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
     let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
         .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH));
 
+    let mut files:Vec<LocalFileDescWithState> = vec![];
+
     for local_file in &meta.local {
         let path = shellexpand::tilde(&local_file.path);
+        let history = update_file_history(&path)?;
         if local_file.todos {
             let todos = parse_todo_file(&path)?;
             todos_count += todos.len();
@@ -212,20 +221,27 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
                 all_todos.push(todo.clone());
             }
         }
+
         if local_file.frequency_goal_seconds > 0 {
             println!("frequency goal for {}: {}", path, local_file.frequency_goal_seconds);
-            let history = update_file_history(&path)?;
             assert!(!history.states.is_empty());
-            let last_state = &history.states[history.states.len() - 1];
-            println!("last mod time {:?} for {}", last_state.modification_time, path);
+            {
+                let last_state = &history.states[history.states.len() - 1];
+                println!("last mod time {:?} for {}", last_state.modification_time, path);
+            }
         }
+
+        files.push(LocalFileDescWithState {
+            desc: local_file.clone(),
+            states: history.states
+        });
     }
 
     Ok(CachedData {
         last_update: SystemTime::now(),
         todos_count,
         todos: all_todos,
-        local_files: meta.local.clone(),
+        local_files: files
     })
 }
 

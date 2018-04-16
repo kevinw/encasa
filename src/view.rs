@@ -1,10 +1,10 @@
-use {CachedData, LocalFileDesc};
+use {CachedData, LocalFileDescWithState};
 use todo::Task;
 
 use askama::Template;
 
 mod filters {
-    use ::askama::MarkupDisplay;
+    //use ::askama::MarkupDisplay;
     /*
     pub fn linkify(s: MarkupDisplay<&String>) -> ::askama::Result<MarkupDisplay<&String>> {
         let unsafe_str = s.unsafe_string();
@@ -24,6 +24,7 @@ where
 }
     */
 
+/*
     pub fn mytrim(s: &::std::fmt::Display) -> ::askama::Result<String> {
         let s = format!("{}", s);
         Ok(s.trim().to_owned())
@@ -47,6 +48,7 @@ where
         }
         Ok(result.to_owned())
     }
+    */
 }
 
 #[derive(Template)]
@@ -54,7 +56,7 @@ where
 struct HelloTemplate<'a> {
     json_dump: &'a str,
     todos_count: usize,
-    local_files: &'a Vec<LocalFileDesc>,
+    local_files: &'a Vec<LocalFileDescWithState>,
     todos: &'a Vec<Task>,
 }
 

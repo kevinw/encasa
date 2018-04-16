@@ -1,0 +1,13 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\editlocal]
+"URL Protocol"=""
+@="URL:Edit Local Protocol"
+"DefaultIcon"="\"C:\\Program Files (x86)\\vim\\vim80\\gvim.exe\",1"
+
+[HKEY_CLASSES_ROOT\editlocal\shell]
+
+[HKEY_CLASSES_ROOT\editlocal\shell\open]
+
+[HKEY_CLASSES_ROOT\editlocal\shell\open\command]
+@="c:\\Python27\\pythonw.exe c:\\Users\\kevin\\editlocal.py \"%1\""
