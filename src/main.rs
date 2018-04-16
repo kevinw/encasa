@@ -12,6 +12,7 @@ extern crate serde;
 extern crate serde_json;
 extern crate serde_yaml;
 extern crate shellexpand;
+extern crate linkify;
 
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate nom;

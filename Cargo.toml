@@ -23,6 +23,7 @@ serde_yaml = "*"
 chrono = { version = "*", features = ["serde"] }
 
 shellexpand = "*"
+linkify = "*"
 
 [dependencies.nom]
 version = "^3.2"
@@ -32,3 +33,4 @@ version = "1.0.0"
 
 [dependencies.regex]
 version = "^0.2"
+

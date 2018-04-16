@@ -10,7 +10,7 @@
     .unstyled-list {
       list-style: none;
     }
-    input[type = "checkbox"]:checked + label {
+    input[type="checkbox"]:checked + label {
         text-decoration: line-through;
         color: grey;
     }
@@ -29,8 +29,8 @@
   <ul id="todo_list" class="unstyled-list">
   {% for todo in todos %}
   <li>
-    <input type="checkbox" id="todo_{{- loop.index0 }}" name="todohash" value="{{ todo.calc_hash() }}" {% if todo.finished %}checked{% endif %}>
-    <label for="todo_{{- loop.index0 }}">{{ todo.subject }}</label>
+    <input type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.calc_hash() }}"{% if todo.finished %} checked{% endif %}>
+    <label for="todo-{{- loop.index0 }}">{{ todo.subject|mytrim }}</label>
   </li>
   {% endfor %}
   </ul>
@@ -38,7 +38,8 @@
   <pre>
 {{ json_dump }}
   </pre>
-  <script>
+
+<script>
 function postJSON(url, data, cb) {
   console.log("POST " + url + " " + JSON.stringify(data));
   function reqListener() {

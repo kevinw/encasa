@@ -1,7 +1,53 @@
-use askama::Template;
 use {CachedData, LocalFileDesc};
 use todo::Task;
-// use std::hash::Hash;
+
+use askama::Template;
+
+mod filters {
+    use ::askama::MarkupDisplay;
+    /*
+    pub fn linkify(s: MarkupDisplay<&String>) -> ::askama::Result<MarkupDisplay<&String>> {
+        let unsafe_str = s.unsafe_string();
+        let linkified_str = linkify_str(&unsafe_str).unwrap();
+        Ok(MarkupDisplay::Unsafe(&linkified_str))
+    }
+    */
+
+    /*
+pub fn safe<D, I>(v: I) -> Result<MarkupDisplay<D>>
+where
+    D: fmt::Display,
+    MarkupDisplay<D>: From<I>
+{
+    let res: MarkupDisplay<D> = v.into();
+    Ok(res.mark_safe())
+}
+    */
+
+    pub fn mytrim(s: &::std::fmt::Display) -> ::askama::Result<String> {
+        let s = format!("{}", s);
+        Ok(s.trim().to_owned())
+    }
+
+    pub fn linkify(d: &::std::fmt::Display) -> ::askama::Result<String> {
+        let s = format!("{}", d);
+        let mut finder = ::linkify::LinkFinder::new();
+        finder.kinds(&[::linkify::LinkKind::Url]);
+        let mut last = 0;
+        let mut result = String::new();
+        for link in finder.links(&s) {
+            result.push_str(&s[last .. link.start()]);
+            result.push_str(&format!("<a href=\"{}\">{}</a>", link.as_str(), link.as_str()));
+            last = link.end();
+        }
+        if last == 0 {
+            result = s.to_string();
+        } else {
+            result.push_str(&s[last ..]);
+        }
+        Ok(result.to_owned())
+    }
+}
 
 #[derive(Template)]
 #[template(path = "hello.html")]
