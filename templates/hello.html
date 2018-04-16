@@ -22,7 +22,7 @@
 
   <ul>
   {% for local_file in local_files %}
-  <li>{{ local_file.path }}</li>
+  <li><a href="editlocal://{{ local_file.path }}">{{ local_file.path }}</a></li>
   {% endfor %}
   </ul>
 

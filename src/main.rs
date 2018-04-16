@@ -1,12 +1,13 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
+
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate askama;
+#[macro_use] extern crate hyper;
 
 extern crate chrono;
 extern crate futures;
 extern crate gotham;
-extern crate hyper;
 extern crate mime;
 extern crate serde;
 extern crate serde_json;
@@ -44,6 +45,8 @@ use gotham::router::builder::{build_simple_router, DefineSingleRoute, DrawRoutes
 use gotham::handler::{HandlerFuture, IntoHandlerError};
 
 use std::time::SystemTime;
+
+header! { (XFrameOptions, "X-Frame-Options") => [String] }
 
 static META_YAML_PATH: &str = "c:\\Users\\kevin\\homepage.yaml";
 
@@ -319,8 +322,7 @@ fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Er
 }
 
 fn post_todos(mut state: State) -> Box<HandlerFuture> {
-
-    let f = Body::take_from(&mut state)
+    Box::new(Body::take_from(&mut state)
         .concat2()
         .then(|full_body| match full_body {
             Ok(valid_body) => {
@@ -339,18 +341,7 @@ fn post_todos(mut state: State) -> Box<HandlerFuture> {
                 future::ok((state, res))
             }
             Err(e) => return future::err((state, e.into_handler_error())),
-        });
-    Box::new(f)
-
-        /*
-
-    let response_string = String::from("{\"status\": \"ok\"}");
-    let res = create_response(
-        &state, StatusCode::Ok,
-        Some((response_string.into_bytes(), mime::APPLICATION_JSON)),
-    );
-    (state, res)
-    */
+        }))
 }
 
 pub fn index(state: State) -> (State, Response) {
@@ -360,10 +351,10 @@ pub fn index(state: State) -> (State, Response) {
     let html = view::render(&cached_data, &serialized);
     let html_bytes = html.into_bytes();
 
-    let res = create_response(
-        &state, StatusCode::Ok,
-        Some((html_bytes, mime::TEXT_HTML)),
-    );
+    let mut res = create_response(&state, StatusCode::Ok,
+        Some((html_bytes, mime::TEXT_HTML)));
+
+    res.headers_mut().set(XFrameOptions("ALLOW FROM file://".to_owned()));
 
     (state, res)
 }
