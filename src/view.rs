@@ -1,6 +1,7 @@
 use askama::Template;
 use {CachedData, LocalFileDesc};
 use todo::Task;
+// use std::hash::Hash;
 
 #[derive(Template)]
 #[template(path = "hello.html")]

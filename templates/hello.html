@@ -7,10 +7,17 @@
     body {
       font-family: 'Oswald', sans-serif;
     }
+    .unstyled-list {
+      list-style: none;
+    }
+    input[type = "checkbox"]:checked + label {
+        text-decoration: line-through;
+        color: grey;
+    }
+
   </style>
 </head>
 <body>
-
   <h1>{{ todos_count }} TODOs</h1>
 
   <ul>
@@ -19,16 +26,59 @@
   {% endfor %}
   </ul>
 
-
-  <ul>
+  <ul id="todo_list" class="unstyled-list">
   {% for todo in todos %}
-  <li>{{ todo.subject }}</li>
+  <li>
+    <input type="checkbox" id="todo_{{- loop.index0 }}" name="todohash" value="{{ todo.calc_hash() }}" {% if todo.finished %}checked{% endif %}>
+    <label for="todo_{{- loop.index0 }}">{{ todo.subject }}</label>
+  </li>
   {% endfor %}
   </ul>
 
   <pre>
 {{ json_dump }}
   </pre>
+  <script>
+function postJSON(url, data, cb) {
+  console.log("POST " + url + " " + JSON.stringify(data));
+  function reqListener() {
+    console.log(this.response);
+  }
+  var xhr = new XMLHttpRequest();
+  xhr.addEventListener("load", reqListener);
+  xhr.open("POST", "/todos");
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  if (cb) {
+    xhr.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        var res = JSON.parse(this.responseText);
+        cb(res);
+      }
+    }
+  }
+  xhr.send(JSON.stringify(data));
+}
+
+function markTodo(hash, completed, cb) {
+  postJSON("/todos", { hash: hash, completed: completed }, cb);
+}
+
+function clickTodo(e) {
+  var node = e.target;
+  if (node.nodeName !== "INPUT")
+    return;
+
+  var hash = node.getAttribute("value");
+  markTodo(hash, node.checked, function(res) {
+    if (res.hash)
+      node.value = res.hash;
+  });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  document.getElementById("todo_list").addEventListener("click", clickTodo, false);
+});
+</script>
 
 </body>
 </html>

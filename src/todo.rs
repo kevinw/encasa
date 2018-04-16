@@ -1,5 +1,7 @@
 use ::std::collections::BTreeMap;
 use ::nom::rest_s;
+use std::hash::{Hash, Hasher};
+use std::collections::hash_map::DefaultHasher;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct Task {
@@ -14,6 +16,14 @@ pub struct Task {
     pub projects: Vec<String>,
     pub hashtags: Vec<String>,
     pub tags: BTreeMap<String, String>,
+}
+
+impl Task {
+    pub fn calc_hash(&self) -> String {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        format!("{:x}", hasher.finish())
+    }
 }
 
 impl Default for Task

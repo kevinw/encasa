@@ -24,7 +24,8 @@ use todo::Task;
 
 pub use chrono::NaiveDate as Date;
 
-use hyper::{Response, StatusCode};
+use futures::{future, Future, Stream};
+
 use ::std::str::FromStr;
 use std::fs;
 use std::fs::File;
@@ -32,7 +33,14 @@ use std::path::{Path};
 use std::io::{Read, Write, BufReader, BufRead};
 
 use gotham::http::response::create_response;
-use gotham::state::State;
+use gotham::router::Router;
+
+use hyper::{Body, Response, StatusCode};
+
+use gotham::state::{FromState, State};
+use gotham::router::builder::{build_simple_router, DefineSingleRoute, DrawRoutes};
+
+use gotham::handler::{HandlerFuture, IntoHandlerError};
 
 use std::time::SystemTime;
 
@@ -184,11 +192,11 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
 }
 
 fn update_data() -> Result<CachedData, ::std::io::Error> {
-    let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
-        .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH));
-
     let mut todos_count:usize = 0;
     let mut all_todos:Vec<Task> = vec![];
+
+    let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
+        .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH));
 
     for local_file in &meta.local {
         let path = shellexpand::tilde(&local_file.path);
@@ -224,7 +232,7 @@ mod tests {
 
     #[test]
     fn receive_hello_world_response() {
-        let test_server = TestServer::new(|| Ok(say_hello)).unwrap();
+        let test_server = TestServer::new(|| Ok(index)).unwrap();
         let response = test_server
             .client()
             .get("http://localhost")
@@ -245,7 +253,106 @@ mod tests {
     }
 }
 
-pub fn say_hello(state: State) -> (State, Response) {
+fn router() -> Router {
+    build_simple_router(|route| {
+        route
+            .post("/todos")
+            .to(post_todos);
+        route.get("/").to(index);
+
+    })
+}
+
+#[derive(Deserialize)]
+struct TodosPost {
+    hash: String,
+    completed: bool,
+}
+
+fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Error> {
+    let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
+        .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH));
+
+    let mut found_any = false;
+    let mut new_hash:String = String::new();
+    for local_file in &meta.local {
+        if !local_file.todos {
+            continue;
+        }
+
+        let path:&str = &shellexpand::tilde(&local_file.path);
+        let mut lines:Vec<String> = vec![];
+        let mut found = false;
+        for (num, line_res) in BufReader::new(File::open(path)?).lines().enumerate() {
+            let line = line_res?;
+            match &mut Task::from_str(&line) {
+                Ok(task) => {
+                    if task.calc_hash() == hash {
+                        task.finished = finished;
+                        found = true;
+                        let new_line = format!("{}", task);
+                        println!("NEW {}", new_line);
+                        new_hash.push_str(&task.calc_hash());
+                        lines.push(new_line);
+                        continue;
+                    }
+                },
+                Err(_) => {
+                    eprintln!("ERROR parsing todo in {}:{}", path, num);
+                }
+            }
+
+            lines.push(String::from(line));
+        }
+
+        if found {
+            File::create(&path)
+                .expect(&format!("could not write back {}", path))
+                .write_all(&lines.join("\n").into_bytes())?;
+        }
+
+        found_any = found_any || found;
+    }
+
+    Ok(new_hash)
+}
+
+fn post_todos(mut state: State) -> Box<HandlerFuture> {
+
+    let f = Body::take_from(&mut state)
+        .concat2()
+        .then(|full_body| match full_body {
+            Ok(valid_body) => {
+                let body_content = String::from_utf8(valid_body.to_vec()).unwrap();
+                let data: TodosPost = serde_json::from_str(&body_content).unwrap();
+                let new_hash = mark_todo_completed(&data.hash, data.completed).unwrap();
+                let res = if !new_hash.is_empty() {
+                    let mut response_string = String::from("{\"hash\": \"");
+                    response_string.push_str(&new_hash);
+                    response_string.push_str("\"}");
+                    create_response(&state, StatusCode::Ok,
+                        Some((response_string.into_bytes(), mime::APPLICATION_JSON)))
+                } else {
+                    create_response(&state, StatusCode::NotFound, None)
+                };
+                future::ok((state, res))
+            }
+            Err(e) => return future::err((state, e.into_handler_error())),
+        });
+    Box::new(f)
+
+        /*
+
+    let response_string = String::from("{\"status\": \"ok\"}");
+    let res = create_response(
+        &state, StatusCode::Ok,
+        Some((response_string.into_bytes(), mime::APPLICATION_JSON)),
+    );
+    (state, res)
+    */
+}
+
+pub fn index(state: State) -> (State, Response) {
     let cached_data = update_data().unwrap();
     let serialized = serde_json::to_string_pretty(&cached_data).unwrap();
 
@@ -263,5 +370,5 @@ pub fn say_hello(state: State) -> (State, Response) {
 pub fn main() {
     let addr = "127.0.0.1:7878";
     println!("Listening for requests at http://{}", addr);
-    gotham::start(addr, || Ok(say_hello))
+    gotham::start(addr, router());
 }
