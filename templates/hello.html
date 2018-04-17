@@ -18,9 +18,9 @@
   </style>
 </head>
 <body>
-  <h1>{{ todos_count }} TODOs</h1>
+  <h1><span id="total_todos_count">{{ todos_count }}</span> TODOs</h1>
 
-  <ul>
+  <ul class="unstyled-list">
   {% for local_file in local_files %}
   <li><a href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.path }}</a></li>
   {% endfor %}
@@ -30,7 +30,7 @@
   {% for todo in todos %}
   <li>
     <input type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.calc_hash() }}"{% if todo.finished %} checked{% endif %}>
-    <label for="todo-{{- loop.index0 }}">{{ todo.subject }}</label>
+    <label for="todo-{{- loop.index0 }}">{{ todo.subject|linkify|safe }}</label>
   </li>
   {% endfor %}
   </ul>
@@ -70,9 +70,11 @@ function clickTodo(e) {
     return;
 
   var hash = node.getAttribute("value");
-  markTodo(hash, node.checked, function(res) {
-    if (res.hash)
+  var markFinished = node.checked;
+  markTodo(hash, markFinished, function(res) {
+    if (res.hash) {
       node.value = res.hash;
+    }
   });
 }
 

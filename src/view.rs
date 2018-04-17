@@ -29,6 +29,7 @@ where
         let s = format!("{}", s);
         Ok(s.trim().to_owned())
     }
+    */
 
     pub fn linkify(d: &::std::fmt::Display) -> ::askama::Result<String> {
         let s = format!("{}", d);
@@ -48,7 +49,6 @@ where
         }
         Ok(result.to_owned())
     }
-    */
 }
 
 #[derive(Template)]

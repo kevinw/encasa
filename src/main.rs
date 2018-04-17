@@ -50,33 +50,12 @@ header! { (XFrameOptions, "X-Frame-Options") => [String] }
 
 static META_YAML_PATH: &str = "c:\\Users\\kevin\\homepage.yaml";
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct RecordFileModificationTime
-{
-    modification_time: SystemTime
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct Record
-{
-    modification_time: SystemTime,
-    note: String,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct FileState
 {
     modification_time: SystemTime,
     size: u64,
 }
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct FileModificationRecords
-{
-    file_path: String,
-    modification_times: Vec<FileState>,
-}
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct HomepageMeta {
@@ -94,6 +73,22 @@ pub struct LocalFileDesc {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct FileStateCache {
     states: Vec<FileState>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum UpdateState {
+    Ok { last_modified: SystemTime },
+    NeedsUpdate {
+        last_modified: SystemTime,
+        overdue: std::time::Duration
+    },
+}
+
+impl UpdateState {
+    fn from_file(path: &str, latest: &FileState)
+    {
+        //let diff = SystemTime::now() - latest.modification_time;
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -165,8 +160,9 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
     {
         let mut meta_path = String::from(path);
         meta_path.push_str(".meta.yaml");
-        meta_path_str = meta_path; // meta_path.to_str().expect("path was not valid utf8"));
+        meta_path_str = meta_path;
     }
+
 
     if !Path::new(&meta_path_str).exists() {
         let empty_file_state_cache = FileStateCache { states: vec![] };
@@ -215,7 +211,7 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
         let history = update_file_history(&path)?;
         if local_file.todos {
             let todos = parse_todo_file(&path)?;
-            todos_count += todos.len();
+            todos_count += todos.iter().filter(|c| !c.finished).count();
             println!("{} total todos in {}", todos.len(), path);
             for todo in &todos {
                 all_todos.push(todo.clone());
@@ -310,10 +306,8 @@ fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Er
                     if task.calc_hash() == hash {
                         task.finished = finished;
                         found = true;
-                        let new_line = format!("{}", task);
-                        println!("NEW {}", new_line);
                         new_hash.push_str(&task.calc_hash());
-                        lines.push(new_line);
+                        lines.push(format!("{}", task));
                         continue;
                     }
                 },
@@ -342,6 +336,8 @@ fn post_todos(mut state: State) -> Box<HandlerFuture> {
         .concat2()
         .then(|full_body| match full_body {
             Ok(valid_body) => {
+                // TODO: instead of .unwrap(), everything should be in a context
+                // where server errors become 500 responses.
                 let body_content = String::from_utf8(valid_body.to_vec()).unwrap();
                 let data: TodosPost = serde_json::from_str(&body_content).unwrap();
                 let new_hash = mark_todo_completed(&data.hash, data.completed).unwrap();

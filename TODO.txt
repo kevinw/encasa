@@ -8,9 +8,10 @@ show deadlines on todos
 last git commit as "last modified" date
 add a "view config" section
 use https://github.com/borisyankov/react-sparklines for todo files, file sizes
-show TODO.txt
-allow reading todo lists from multiple files--podcast todo, life todo, project todos, etc.
+x show TODO.txt
+x allow reading todo lists from multiple files--podcast todo, life todo, project todos, etc.
 show "days until" specific google calendar events
 show last modification time for journal as "it's been 3 days since you wrote to Journal.txt, and your goal is once every two days!"
 trello?
-@read this is a test
+x @read this is a test
+turn @read and +project into clickable things at least highlight them?
