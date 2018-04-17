@@ -21,6 +21,7 @@ extern crate regex;
 
 mod view;
 mod todo;
+mod gcal;
 
 use todo::Task;
 
@@ -49,6 +50,7 @@ use std::time::SystemTime;
 header! { (XFrameOptions, "X-Frame-Options") => [String] }
 
 static META_YAML_PATH: &str = "c:\\Users\\kevin\\homepage.yaml";
+static DEADLINES_JSON_PATH: &str = "c:\\Users\\kevin\\deadlines.json";
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct FileState
@@ -104,6 +106,12 @@ pub struct CachedData
     todos_count: usize,
     todos: Vec<Task>,
     local_files: Vec<LocalFileDescWithState>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Deadlines {
+    deadlines: Vec<gcal::Event>,
 }
 
 impl FileState {
@@ -163,7 +171,6 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
         meta_path_str = meta_path;
     }
 
-
     if !Path::new(&meta_path_str).exists() {
         let empty_file_state_cache = FileStateCache { states: vec![] };
         let serialized_bytes = serde_yaml::to_string(&empty_file_state_cache)
@@ -197,9 +204,17 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
     Ok(history)
 }
 
+fn get_events() -> Result<Deadlines, std::io::Error> {
+    let deadlines:Deadlines = serde_yaml::from_str(&get_file_contents(DEADLINES_JSON_PATH)?).expect(
+        &format!("Couldn't parse JSON at {}", DEADLINES_JSON_PATH));
+    Ok(deadlines)
+}
+
 fn update_data() -> Result<CachedData, ::std::io::Error> {
     let mut todos_count:usize = 0;
     let mut all_todos:Vec<Task> = vec![];
+
+    let events = get_events()?;
 
     let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
         .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH));
