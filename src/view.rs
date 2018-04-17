@@ -4,6 +4,8 @@ use todo::Task;
 use askama::Template;
 
 mod filters {
+    use regex::Regex;
+
     //use ::askama::MarkupDisplay;
     /*
     pub fn linkify(s: MarkupDisplay<&String>) -> ::askama::Result<MarkupDisplay<&String>> {
@@ -30,6 +32,15 @@ where
         Ok(s.trim().to_owned())
     }
     */
+
+    pub fn spanify(d: &::std::fmt::Display) -> ::askama::Result<String> {
+        lazy_static! {
+            static ref RE: Regex  = Regex::new(r"@\w+").unwrap();
+        }
+        let s = format!("{}", d);
+        let t = RE.replace_all(&s, "<span class=\"todo-context\">$0</span>");
+        Ok(String::from(t))
+    }
 
     pub fn linkify(d: &::std::fmt::Display) -> ::askama::Result<String> {
         let s = format!("{}", d);

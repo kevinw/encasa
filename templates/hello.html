@@ -14,6 +14,7 @@
         text-decoration: line-through;
         color: grey;
     }
+    .todo-context { color: grey; }
 
   </style>
 </head>
@@ -30,7 +31,7 @@
   {% for todo in todos %}
   <li>
     <input type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.calc_hash() }}"{% if todo.finished %} checked{% endif %}>
-    <label for="todo-{{- loop.index0 }}">{{ todo.subject|linkify|safe }}</label>
+    <label for="todo-{{- loop.index0 }}">{{ todo.subject|linkify|spanify|safe }}</label>
   </li>
   {% endfor %}
   </ul>
