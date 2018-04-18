@@ -1,0 +1,10 @@
+[package]
+name = "calimport"
+version = "0.1.0"
+authors = ["Kevin Watters <kevinwatters@gmail.com>"]
+
+[dependencies]
+google-calendar3 = "*"
+hyper = "*"
+hyper-rustls = "*"
+yup-oauth2 = "*"

@@ -5,6 +5,7 @@
 #[macro_use] extern crate askama;
 #[macro_use] extern crate hyper;
 
+extern crate time;
 extern crate chrono;
 extern crate futures;
 extern crate gotham;
@@ -280,7 +281,11 @@ mod tests {
     fn parse_new_yaml() {
         let cached_data = update_data().expect("update_data failed");
         let json = serde_json::to_string_pretty(&cached_data).unwrap();
-        println!("{}", json);
+        //println!("{}", json);
+    }
+
+    #[test]
+    fn human_readable_times() {
     }
 }
 

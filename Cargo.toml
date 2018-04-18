@@ -9,6 +9,7 @@ askama = { git = "https://github.com/djc/askama.git" }
 [dependencies]
 askama = { git = "https://github.com/djc/askama.git" }
 
+time = "*"
 gotham = "*"
 
 hyper = "0.11"
