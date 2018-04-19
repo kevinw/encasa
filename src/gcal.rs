@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
 
-use chrono::prelude::*;
-use chrono::offset::LocalResult;
-use chrono::format::{ParseResult, ParseError};
+//use chrono::prelude::*;
+//use chrono::offset::LocalResult;
+//use chrono::format::{ParseResult, ParseError};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct DateEntry {
@@ -11,12 +11,14 @@ struct DateEntry {
     #[serde(default)] timeZone: String,
 }
 
+/*
 impl DateEntry {
     fn to_chrono_datetime(&self) -> ParseResult<DateTime<Local>> {
         println!("datetime_from_str on {}", self.date);
         Local.datetime_from_str(&self.date, "%Y-%m-%d")
     }
 }
+*/
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Event {
@@ -28,8 +30,8 @@ pub struct Event {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use serde_json;
+    //use super::*;
+    //use serde_json;
     use time;
 
     #[test]
@@ -51,8 +53,7 @@ mod tests {
             println!("DAYS: {}, HOURS: {}", diff.num_days(), diff.num_hours());
         }
 
-        match time::strptime("2014-03-10 11:20:34.3454",
-                             "%Y-%m-%d %H:%M:%S.%f")
+        match time::strptime("2014-03-10 11:20:34.3454", "%Y-%m-%d %H:%M:%S.%f")
         {
             Ok(v) => println!("OK OK OK: {}", time::strftime("%Y/%m/%d %H:%M:%S.%f",
                                                    &v).unwrap()),

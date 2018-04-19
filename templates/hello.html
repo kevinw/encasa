@@ -14,31 +14,49 @@
         text-decoration: line-through;
         color: grey;
     }
-    .todo-context { color: grey; }
-
+    .navigable-list li:focus-within {
+      background-color: cyan;
+    }
+    .todo-context {
+      color: grey;
+    }
+    .last-updated {
+      color: grey;
+      font-size: 80%;
+    }
+    .priority-label { font-size: 70%; color: grey; }
+    .todo-priority-0 { font-size: 150%; }
+    .todo-priority-1 { font-size: 120%; }
   </style>
 </head>
 <body>
   <h1><span id="total_todos_count">{{ todos_count }}</span> TODOs</h1>
 
-  <ul class="unstyled-list">
+  <ul class="unstyled-list navigable-list">
   {% for local_file in local_files %}
-  <li><a href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.path }}</a></li>
+    <li{% if local_file.needs_update() %} class="needs-update"{% endif %}>
+      <a class="navigable-elem" href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.path }}</a>
+      <span class="last-updated">
+        {% if local_file.needs_update() %}&#x2757; {% endif %}
+        last updated {{ local_file.duration_since_modified()|humanize_duration }}
+      </span>
+    </li>
   {% endfor %}
   </ul>
 
-  <ul id="todo_list" class="unstyled-list">
+  <ul id="todo_list" class="unstyled-list navigable-list">
   {% for todo in todos %}
-  <li>
-    <input type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.calc_hash() }}"{% if todo.finished %} checked{% endif %}>
-    <label for="todo-{{- loop.index0 }}">{{ todo.subject|linkify|spanify|safe }}</label>
-  </li>
+    <li class="todo-priority-{{ todo.priority }}">
+      <input class="navigable-elem" type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.calc_hash() }}"{% if todo.finished %} checked{% endif %}>
+      <label for="todo-{{- loop.index0 }}">
+        <span class="priority-label">{{ todo.priority_label() }}</span>
+        {{ todo.subject|linkify|spanify|safe }}
+      </label>
+    </li>
   {% endfor %}
   </ul>
 
-  <pre>
-{{ json_dump }}
-  </pre>
+  <pre>{{ json_dump }}</pre>
 
 <script>
 function postJSON(url, data, cb) {
@@ -79,8 +97,58 @@ function clickTodo(e) {
   });
 }
 
+function getFocusedElement() {
+  if (document.hasFocus() &&
+      document.activeElement !== document.body &&
+      document.activeElement !== document.documentElement)
+  {
+      return document.activeElement;
+  }
+}
+
+function mod(n, m) {
+  return ((n % m) + m) % m;
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("todo_list").addEventListener("click", clickTodo, false);
+});
+
+function navigateKeys(delta) {
+  var elem = getFocusedElement();
+  var allNavigable = [].slice.call(document.getElementsByClassName("navigable-elem"));
+  var index = allNavigable.indexOf(elem) + delta;
+  if (index < -1)
+    index = -1;
+  allNavigable[mod(index,  allNavigable.length)].focus();
+}
+
+document.addEventListener("focus", (event) => {
+  console.log(event.target + " FOCUS");
+});
+
+document.addEventListener('keypress', (event) => {
+  const keyName = event.key;
+  switch (keyName) {
+      case "j":
+        navigateKeys(1);
+        return false;
+      case "k":
+        navigateKeys(-1);
+        return false;
+      case "Enter":
+        // If in a TODO list, enter follows the link.
+        var elem = getFocusedElement();
+        if (elem.nodeName == "INPUT") {
+          var links = elem.parentElement.getElementsByTagName('a');
+          if (links.length > 0) {
+            links[0].click();
+            return false;
+          }
+        }
+      default:
+        console.log(keyName);
+  }
 });
 </script>
 

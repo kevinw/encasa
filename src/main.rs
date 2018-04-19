@@ -67,10 +67,13 @@ struct HomepageMeta {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LocalFileDesc {
-    id: String,
     path: String,
     #[serde(default)] todos: bool,
-    #[serde(default)] frequency_goal_seconds: u64,
+    #[serde(default)] frequency_goal_seconds: i64,
+}
+
+impl LocalFileDesc {
+    fn expanded_path(&self) -> String { shellexpand::tilde(&self.path).to_string() }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -80,24 +83,35 @@ struct FileStateCache {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum UpdateState {
-    Ok { last_modified: SystemTime },
-    NeedsUpdate {
-        last_modified: SystemTime,
-        overdue: std::time::Duration
-    },
-}
-
-impl UpdateState {
-    fn from_file(path: &str, latest: &FileState)
-    {
-        //let diff = SystemTime::now() - latest.modification_time;
-    }
+    NoGoal,
+    Ok,
+    NeedsUpdate,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LocalFileDescWithState {
     desc: LocalFileDesc,
     states: Vec<FileState>,
+    update_state: UpdateState,
+}
+
+impl LocalFileDescWithState {
+    fn last_modified(&self) -> SystemTime {
+        assert!(!&self.states.is_empty());
+        let last_state = &self.states[&self.states.len() - 1];
+        last_state.modification_time
+    }
+
+    fn duration_since_modified(&self) -> std::time::Duration {
+        SystemTime::now().duration_since(self.last_modified()).unwrap()
+    }
+
+    fn needs_update(&self) -> bool {
+        match self.update_state {
+            UpdateState::NeedsUpdate => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -215,7 +229,7 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
     let mut todos_count:usize = 0;
     let mut all_todos:Vec<Task> = vec![];
 
-    let events = get_events()?;
+    let _events = get_events()?;
 
     let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
         .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH));
@@ -223,29 +237,39 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
     let mut files:Vec<LocalFileDescWithState> = vec![];
 
     for local_file in &meta.local {
-        let path = shellexpand::tilde(&local_file.path);
+        let path = local_file.expanded_path();
         let history = update_file_history(&path)?;
         if local_file.todos {
             let todos = parse_todo_file(&path)?;
             todos_count += todos.iter().filter(|c| !c.finished).count();
-            println!("{} total todos in {}", todos.len(), path);
+            //println!("{} total todos in {}", todos.len(), path);
             for todo in &todos {
                 all_todos.push(todo.clone());
             }
         }
 
-        if local_file.frequency_goal_seconds > 0 {
-            println!("frequency goal for {}: {}", path, local_file.frequency_goal_seconds);
+        let update_state = if local_file.frequency_goal_seconds > 0 {
+            //println!("frequency goal for {}: {}", path, local_file.frequency_goal_seconds);
             assert!(!history.states.is_empty());
             {
                 let last_state = &history.states[history.states.len() - 1];
-                println!("last mod time {:?} for {}", last_state.modification_time, path);
+                //println!("last mod time {:?} for {}", last_state.modification_time, path);
+                let diff = SystemTime::now().duration_since(last_state.modification_time).unwrap();
+                let seconds = time::Duration::from_std(diff).unwrap().num_seconds();
+                if seconds > local_file.frequency_goal_seconds {
+                    UpdateState::NeedsUpdate
+                } else {
+                    UpdateState::Ok
+                }
             }
-        }
+        } else {
+            UpdateState::NoGoal
+        };
 
         files.push(LocalFileDescWithState {
             desc: local_file.clone(),
-            states: history.states
+            states: history.states,
+            update_state: update_state
         });
     }
 
@@ -280,12 +304,8 @@ mod tests {
     #[test]
     fn parse_new_yaml() {
         let cached_data = update_data().expect("update_data failed");
-        let json = serde_json::to_string_pretty(&cached_data).unwrap();
+        let _json = serde_json::to_string_pretty(&cached_data).unwrap();
         //println!("{}", json);
-    }
-
-    #[test]
-    fn human_readable_times() {
     }
 }
 

@@ -1,1 +1,1 @@
-cargo watch -x run
+cargo watch -x "run -- %*"

@@ -4,10 +4,10 @@ version = "0.1.0"
 authors = ["Kevin Watters <kevinwatters@gmail.com>"]
 
 [build-dependencies]
-askama = { git = "https://github.com/djc/askama.git" }
+askama = "0.6.3"
 
 [dependencies]
-askama = { git = "https://github.com/djc/askama.git" }
+askama = "0.6.3"
 
 time = "*"
 gotham = "*"

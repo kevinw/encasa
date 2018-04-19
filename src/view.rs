@@ -3,37 +3,25 @@ use todo::Task;
 
 use askama::Template;
 
+impl Task {
+    fn priority_label(&self) -> String {
+        let letters:[&str; 26] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+        if self.priority < 26 {
+            format!("({})", letters[self.priority as usize])
+        } else if self.priority == 26 {
+            "".into()
+        } else {
+            "(?)".into()
+        }
+    }
+}
+
 mod filters {
     use regex::Regex;
+    use ::{askama, std, linkify};
+    use time;
 
-    //use ::askama::MarkupDisplay;
-    /*
-    pub fn linkify(s: MarkupDisplay<&String>) -> ::askama::Result<MarkupDisplay<&String>> {
-        let unsafe_str = s.unsafe_string();
-        let linkified_str = linkify_str(&unsafe_str).unwrap();
-        Ok(MarkupDisplay::Unsafe(&linkified_str))
-    }
-    */
-
-    /*
-pub fn safe<D, I>(v: I) -> Result<MarkupDisplay<D>>
-where
-    D: fmt::Display,
-    MarkupDisplay<D>: From<I>
-{
-    let res: MarkupDisplay<D> = v.into();
-    Ok(res.mark_safe())
-}
-    */
-
-/*
-    pub fn mytrim(s: &::std::fmt::Display) -> ::askama::Result<String> {
-        let s = format!("{}", s);
-        Ok(s.trim().to_owned())
-    }
-    */
-
-    pub fn spanify(d: &::std::fmt::Display) -> ::askama::Result<String> {
+    pub fn spanify(d: &std::fmt::Display) -> askama::Result<String> {
         lazy_static! {
             static ref RE: Regex  = Regex::new(r"@\w+").unwrap();
         }
@@ -42,10 +30,33 @@ where
         Ok(String::from(t))
     }
 
-    pub fn linkify(d: &::std::fmt::Display) -> ::askama::Result<String> {
+    pub fn humanize_duration(duration: &std::time::Duration) -> askama::Result<String> {
+        let d = time::Duration::from_std(*duration).unwrap();
+        let days = d.num_days();
+        let string = if days > 0 {
+            String::from(format!("{} days ago", days))
+        } else {
+            let hours = d.num_hours();
+            if hours > 0 {
+                String::from(format!("{} hours ago", hours))
+            } else {
+                let minutes = d.num_minutes();
+                if minutes > 0 {
+                    String::from(format!("{} minutes ago", hours))
+                } else {
+                    let seconds = d.num_seconds();
+                    String::from(format!("{} minutes ago", seconds))
+                }
+            }
+        };
+
+        Ok(string)
+    }
+
+    pub fn linkify(d: &std::fmt::Display) -> askama::Result<String> {
         let s = format!("{}", d);
-        let mut finder = ::linkify::LinkFinder::new();
-        finder.kinds(&[::linkify::LinkKind::Url]);
+        let mut finder = linkify::LinkFinder::new();
+        finder.kinds(&[linkify::LinkKind::Url]);
         let mut last = 0;
         let mut result = String::new();
         for link in finder.links(&s) {
@@ -72,11 +83,13 @@ struct HelloTemplate<'a> {
 }
 
 pub fn render(cached_data: &CachedData, json_dump: &str) -> String {
+    let mut todos_sorted = cached_data.todos.clone();
+    todos_sorted.sort_by(|a, b| a.priority.cmp(&b.priority));
     let hello = HelloTemplate {
         json_dump,
         todos_count: cached_data.todos_count,
         local_files: &cached_data.local_files,
-        todos: &cached_data.todos,
+        todos: &todos_sorted,
     };
     hello.render().unwrap()
 }
