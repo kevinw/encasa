@@ -136,6 +136,13 @@ document.addEventListener('keypress', (event) => {
       case "k":
         navigateKeys(-1);
         return false;
+      case "x":
+        var elem = getFocusedElement();
+        if (elem.nodeName == "INPUT") {
+          elem.checked = !elem.checked;
+          return false;
+        }
+        break;
       case "Enter":
         // If in a TODO list, enter follows the link.
         var elem = getFocusedElement();
@@ -146,8 +153,7 @@ document.addEventListener('keypress', (event) => {
             return false;
           }
         }
-      default:
-        console.log(keyName);
+        break;
   }
 });
 </script>

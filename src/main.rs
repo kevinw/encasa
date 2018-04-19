@@ -30,7 +30,7 @@ pub use chrono::NaiveDate as Date;
 
 use futures::{future, Future, Stream};
 
-use ::std::str::FromStr;
+use std::str::FromStr;
 use std::fs;
 use std::fs::File;
 use std::path::{Path};
