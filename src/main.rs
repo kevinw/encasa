@@ -339,8 +339,9 @@ fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Er
         let path:&str = &shellexpand::tilde(&local_file.path);
         let mut lines:Vec<String> = vec![];
         let mut found = false;
-        for (num, line_res) in BufReader::new(File::open(path)?).lines().enumerate() {
-            let line = line_res?;
+        let mut original_contents = get_file_contents(path)?;
+        for (num, line_res) in original_contents.lines().enumerate() {
+            let line = line_res;
             match &mut Task::from_str(&line) {
                 Ok(task) => {
                     if task.calc_hash() == hash {
@@ -360,6 +361,16 @@ fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Er
         }
 
         if found {
+            {
+                // Write a backup
+                use std::hash::{Hash, Hasher};
+                let mut hasher = std::collections::hash_map::DefaultHasher::new();
+                original_contents.hash(&mut hasher);
+                let mut backup_path = shellexpand::tilde("~/.homepage/backups/").to_string();
+                backup_path.push_str(&hasher.finish().to_string());
+                File::create(&backup_path)?.write_all(&original_contents.into_bytes())?;
+            }
+
             File::create(&path)
                 .expect(&format!("could not write back {}", path))
                 .write_all(&lines.join("\n").into_bytes())?;
