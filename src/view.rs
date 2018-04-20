@@ -1,4 +1,4 @@
-use {CachedData, LocalFileDescWithState};
+use {CachedData, LocalFileDescWithState, QueryStringExtractor};
 use todo::Task;
 
 use askama::Template;
@@ -23,10 +23,10 @@ mod filters {
 
     pub fn spanify(d: &std::fmt::Display) -> askama::Result<String> {
         lazy_static! {
-            static ref RE: Regex  = Regex::new(r"@\w+").unwrap();
+            static ref RE: Regex  = Regex::new(r"@(\w+)").unwrap();
         }
         let s = format!("{}", d);
-        let t = RE.replace_all(&s, "<span class=\"todo-context\">$0</span>");
+        let t = RE.replace_all(&s, r#"<a class="todo-context" href="?context=$1">$0</a>"#);
         Ok(String::from(t))
     }
 
@@ -82,9 +82,20 @@ struct HelloTemplate<'a> {
     todos: &'a Vec<Task>,
 }
 
-pub fn render(cached_data: &CachedData, json_dump: &str) -> String {
+pub fn render(cached_data: &CachedData, json_dump: &str, query_params: &QueryStringExtractor) -> String {
     let mut todos_sorted = cached_data.todos.clone();
+
+    // sort
     todos_sorted.sort_by(|a, b| a.priority.cmp(&b.priority));
+
+    // filter
+    if !query_params.context.is_empty() {
+        todos_sorted.retain(|t| t.contexts.contains(&query_params.context));
+    }
+    if !query_params.project.is_empty() {
+        todos_sorted.retain(|t| t.projects.contains(&query_params.project));
+    }
+
     let hello = HelloTemplate {
         json_dump,
         todos_count: cached_data.todos_count,

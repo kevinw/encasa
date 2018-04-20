@@ -9,6 +9,7 @@ extern crate time;
 extern crate chrono;
 extern crate futures;
 extern crate gotham;
+#[macro_use] extern crate gotham_derive;
 extern crate mime;
 extern crate serde;
 extern crate serde_json;
@@ -308,13 +309,21 @@ mod tests {
         //println!("{}", json);
     }
 }
+#[derive(Deserialize, StateData, StaticResponseExtender)]
+pub struct QueryStringExtractor {
+    #[serde(default)] context: String,
+    #[serde(default)] project: String,
+}
 
 fn router() -> Router {
     build_simple_router(|route| {
         route
             .post("/todos")
             .to(post_todos);
-        route.get("/").to(index);
+        route
+            .get("/")
+            .with_query_string_extractor::<QueryStringExtractor>()
+            .to(index);
 
     })
 }
@@ -407,18 +416,12 @@ fn post_todos(mut state: State) -> Box<HandlerFuture> {
         }))
 }
 
-pub fn index(state: State) -> (State, Response) {
+pub fn index(mut state: State) -> (State, Response) {
     let cached_data = update_data().unwrap();
     let serialized = serde_json::to_string_pretty(&cached_data).unwrap();
-
-    let html = view::render(&cached_data, &serialized);
-    let html_bytes = html.into_bytes();
-
-    let mut res = create_response(&state, StatusCode::Ok,
-        Some((html_bytes, mime::TEXT_HTML)));
-
+    let html_bytes = view::render(&cached_data, &serialized, &QueryStringExtractor::take_from(&mut state)).into_bytes();
+    let mut res = create_response(&state, StatusCode::Ok, Some((html_bytes, mime::TEXT_HTML)));
     res.headers_mut().set(XFrameOptions("ALLOW FROM file://".to_owned()));
-
     (state, res)
 }
 

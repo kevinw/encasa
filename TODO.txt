@@ -1,4 +1,4 @@
-(A) backup files somewhere
+x (A) backup files somewhere
 actually check that the journal is growing, not just updated. (should goals have a word count goal? can word count be a measurable statistic?)
 festival submissions for things like http://virtualrealityla.com/
 TO READ folder on desktop--treat some folders as a TODO list in themselves
