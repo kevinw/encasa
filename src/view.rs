@@ -81,7 +81,9 @@ mod filters {
     }
 
     pub fn humanize_signed_duration(d: &::time::Duration) -> askama::Result<String> {
-        let word = match DateWhen::for_duration(*d) {
+        let date_when = DateWhen::for_duration(*d);
+
+        let word = match date_when {
             DateWhen::Future => "from now",
             DateWhen::Past => "ago",
             DateWhen::Today => return Ok("today".into()),
@@ -93,7 +95,15 @@ mod filters {
 
         let days = d.num_days().abs();
         let string = String::from(if days > 0 {
-            format!("{} day{} {}", days, is_plural(days), word)
+            if days == 1 {
+                match date_when {
+                    DateWhen::Future => String::from("tomorrow"),
+                    DateWhen::Past => String::from("yesterday"),
+                    DateWhen::Today => panic!("DateWhen::Today but days == 1"),
+                }
+            } else {
+                format!("{} day{} {}", days, is_plural(days), word)
+            }
         } else {
             let hours = d.num_hours().abs();
             if hours > 0 {
@@ -141,11 +151,26 @@ struct HelloTemplate<'a> {
     todos: &'a Vec<Task>,
 }
 
+fn due_date_sort(a: &Task) -> i32 {
+    if a.finished {
+        0 // finished tasks don't sort by their due date
+    } else {
+        match &a.due_date {
+            Some(due_date) => match DateWhen::for_date(due_date) {
+                DateWhen::Future => 0,
+                DateWhen::Today => -1,
+                DateWhen::Past => -2,
+            },
+            None => 0,
+        }
+    }
+}
+
+
 pub fn render(cached_data: &CachedData, json_dump: &str, query_params: &QueryStringExtractor) -> String {
     let mut todos_sorted = cached_data.todos.clone();
 
-    // sort
-    todos_sorted.sort_by(|a, b| a.priority.cmp(&b.priority));
+    todos_sorted.sort_by_key(|a| { (due_date_sort(&a), a.priority) });
 
     // filter
     {

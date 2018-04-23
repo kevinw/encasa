@@ -66,7 +66,7 @@
   <ul class="unstyled-list navigable-list">
   {% for local_file in local_files %}
     <li{% if local_file.needs_update() %} class="needs-update"{% endif %}>
-      <a class="navigable-elem" href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.path }}</a>
+      <a class="navigable-elem" href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.readable_name() }}</a>
       <span class="last-updated">
         {% if local_file.needs_update() %}&#x2757; {% endif %}
         last updated {{ local_file.duration_since_modified()|humanize_duration }}

@@ -68,13 +68,23 @@ struct HomepageMeta {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LocalFileDesc {
+    #[serde(default)] name: String,
     path: String,
     #[serde(default)] todos: bool,
     #[serde(default)] frequency_goal_seconds: i64,
+
+    #[serde(default)] auto_project: String,
 }
 
 impl LocalFileDesc {
     fn expanded_path(&self) -> String { shellexpand::tilde(&self.path).to_string() }
+    fn readable_name(&self) -> &str {
+        if self.name.is_empty() {
+            &self.path
+        } else {
+            &self.name
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
