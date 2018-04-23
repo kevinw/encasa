@@ -1,4 +1,4 @@
-(A) 2018-04-23 limit the number of modification times to 100?
+x (A) 2018-04-23 limit the number of modification times to 100?
 (B) 2018-04-23 figure out how to get the server to run always in the background
 (A) 2018-04-23 +homepage sort by due date, then priority
 (A) show "days until" specific google calendar events

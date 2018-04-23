@@ -210,6 +210,12 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
     if history.states.is_empty() || history.states[history.states.len() - 1] != file_state {
         history.states.push(file_state);
 
+        const MAX_ELEMS:usize = 200;
+        if history.states.len() > MAX_ELEMS {
+            let num_to_drain = history.states.len() - MAX_ELEMS;
+            history.states.drain(0..num_to_drain);
+        }
+
         let new_yaml = serde_yaml::to_string(&history)
             .expect("could not convert FileStateCache to YAML").into_bytes();
 

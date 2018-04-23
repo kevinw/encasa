@@ -166,5 +166,6 @@ pub fn render(cached_data: &CachedData, json_dump: &str, query_params: &QueryStr
         local_files: &cached_data.local_files,
         todos: &todos_sorted,
     };
+
     hello.render().unwrap()
 }

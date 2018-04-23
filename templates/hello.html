@@ -87,6 +87,15 @@
   -->
 
 <script>
+function removeElement(array, elem) {
+  var index = array.indexOf(elem);
+  if (index > -1) {
+    array.splice(index, 1);
+  }
+}
+
+var activeRequests = [];
+
 function postJSON(url, data, cb) {
   console.log("POST " + url + " " + JSON.stringify(data));
   function reqListener() {
@@ -95,15 +104,28 @@ function postJSON(url, data, cb) {
   var xhr = new XMLHttpRequest();
   xhr.addEventListener("load", reqListener);
   xhr.open("POST", "/todos");
+
   xhr.setRequestHeader('Content-Type', 'application/json');
-  if (cb) {
-    xhr.onreadystatechange = function() {
-      if (this.readyState == 4 && this.status == 200) {
+
+  activeRequests.push(xhr);
+
+  xhr.onreadystatechange = function() {
+    if (this.readyState != 4)
+      return;
+
+    removeElement(activeRequests, xhr);
+
+    if (this.status == 200) {
+      if (cb) {
         var res = JSON.parse(this.responseText);
         cb(res);
       }
+    } else {
+      console.error(this.responseText);
+      alert(this.responseText);
     }
-  }
+  };
+
   xhr.send(JSON.stringify(data));
 }
 
@@ -138,28 +160,7 @@ function mod(n, m) {
   return ((n % m) + m) % m;
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-  var todoList = document.getElementById("todo_list");
-  todoList.addEventListener("click", clickTodo, false);
-  todoList.addEventListener("change", function(e) {
-    if (e.target.checked) {
-      e.target.parentElement.classList.add("todo-done");
-    } else {
-      e.target.parentElement.classList.remove("todo-done");
-    }
-  }, false);
-});
-
-function navigateKeys(delta) {
-  var elem = getFocusedElement();
-  var allNavigable = [].slice.call(document.getElementsByClassName("navigable-elem"));
-  var index = allNavigable.indexOf(elem) + delta;
-  if (index < -1)
-    index = -1;
-  allNavigable[mod(index,  allNavigable.length)].focus();
-}
-
-document.addEventListener('keypress', (event) => {
+function onKeyPress(event) {
   const keyName = event.key;
   switch (keyName) {
       case "j":
@@ -187,7 +188,40 @@ document.addEventListener('keypress', (event) => {
         }
         break;
   }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  var todoList = document.getElementById("todo_list");
+  todoList.addEventListener("click", clickTodo, false);
+  todoList.addEventListener("change", function(e) {
+    if (e.target.checked) {
+      e.target.parentElement.classList.add("todo-done");
+    } else {
+      e.target.parentElement.classList.remove("todo-done");
+    }
+  }, false);
+
+  window.addEventListener("beforeunload", function (e) {
+    if (activeRequests.length === 0)
+      return;
+
+    var confirmationMessage = "There are pending requests; are you sure you want to navigate away?";
+    e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+    return confirmationMessage;              // Gecko, WebKit, Chrome <34
+  });
+
+  document.addEventListener('keypress', onKeyPress);
 });
+
+function navigateKeys(delta) {
+  var elem = getFocusedElement();
+  var allNavigable = [].slice.call(document.getElementsByClassName("navigable-elem"));
+  var index = allNavigable.indexOf(elem) + delta;
+  if (index < -1)
+    index = -1;
+  allNavigable[mod(index,  allNavigable.length)].focus();
+}
+
 </script>
 
 </body>

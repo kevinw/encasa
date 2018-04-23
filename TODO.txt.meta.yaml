@@ -80,3 +80,11 @@ states:
       secs_since_epoch: 1524463128
       nanos_since_epoch: 354449100
     size: 864
+  - modification_time:
+      secs_since_epoch: 1524498134
+      nanos_since_epoch: 840158200
+    size: 926
+  - modification_time:
+      secs_since_epoch: 1524502261
+      nanos_since_epoch: 420527000
+    size: 927
