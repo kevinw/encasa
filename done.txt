@@ -1,0 +1,4 @@
+x (A) backup files somewhere
+x show TODO.txt
+x allow reading todo lists from multiple files--podcast todo, life todo, project todos, etc.
+x @read this is a test

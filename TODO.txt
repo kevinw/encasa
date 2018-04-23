@@ -1,19 +1,12 @@
-x (A) backup files somewhere
-actually check that the journal is growing, not just updated. (should goals have a word count goal? can word count be a measurable statistic?)
-festival submissions for things like http://virtualrealityla.com/
-TO READ folder on desktop--treat some folders as a TODO list in themselves
-social checkins
+x (A) show deadlines on todos
+(A) show "days until" specific google calendar events
+(B) actually check that the journal is growing, not just updated. (should goals have a word count goal? can word count be a measurable statistic?)
+x show last modification time for journal as "it's been 3 days since you wrote to Journal.txt, and your goal is once every two days!"
+how to capture festival submissions for things like http://virtualrealityla.com/
+TO READ folder on desktop--treat some folders as a TODO list in themselves?
+social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal...
 event submission deadlines
-random quotes? (brainstorm more random things)
-try rust-wasm clientside framework https://github.com/DenisKolodin/yew
-show deadlines on todos
-last git commit as "last modified" date
-add a "view config" section
-use https://github.com/borisyankov/react-sparklines for todo files, file sizes
-x show TODO.txt
-x allow reading todo lists from multiple files--podcast todo, life todo, project todos, etc.
-show "days until" specific google calendar events
-show last modification time for journal as "it's been 3 days since you wrote to Journal.txt, and your goal is once every two days!"
-trello?
-x @read this is a test
-turn @read and +project into clickable things at least highlight them?
+brainstorm more random things like quotes
+last git commit as "last modified" date for project directories
+use (something like) https://github.com/borisyankov/react-sparklines for todo files, file sizes
+x turn @read and +project into clickable things at least highlight them?

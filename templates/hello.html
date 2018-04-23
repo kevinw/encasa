@@ -1,7 +1,9 @@
 <!doctype html>
 <html>
 <head>
-  <title>&#x1f3e1;</title>
+  <meta charset="utf-8" /> 
+  <title>&#x1f3e1; {{ todos_count }} TODOs</title>
+  <base target="_parent">
   <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet"> 
   <style>
     body {
@@ -17,13 +19,27 @@
     .navigable-list li:focus-within {
       background-color: cyan;
     }
-    .todo-context {
+    /* .navigable-list :nth-child(odd) { background: #efefef; } */
+    .todo-context, .todo-project {
       color: grey;
       text-decoration: none;
     }
     .last-updated {
       color: grey;
       font-size: 80%;
+    }
+    .todo-done .due-date-outer {
+      display: none;
+    }
+    .due-date-outer.due-date-past {
+      background: red;
+      color: white;
+      border-radius: 5px;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+    .due-date-outer.due-date-future {
+      color: grey;
     }
     .priority-label { font-size: 70%; color: grey; }
     .todo-priority-0 { font-size: 150%; }
@@ -47,11 +63,18 @@
 
   <ul id="todo_list" class="unstyled-list navigable-list">
   {% for todo in todos %}
-    <li class="todo-priority-{{ todo.priority }}">
+      <li class="todo-priority-{{ todo.priority }}{% if todo.finished %} todo-done{% endif %}">
       <input class="navigable-elem" type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.calc_hash() }}"{% if todo.finished %} checked{% endif %}>
       <label for="todo-{{- loop.index0 }}">
         <span class="priority-label">{{ todo.priority_label() }}</span>
         {{ todo.subject|linkify|spanify|safe }}
+        {% match todo.due_date %}
+        {% when Some with (due_date) %}
+          <span class="due-date-outer due-date-{{ due_date|date_when_css_class }}">
+            due <span class="due-date">{{ due_date|humanize_date }}</span>
+          </span>
+        {% when None %}
+        {% endmatch %}
       </label>
     </li>
   {% endfor %}
@@ -114,7 +137,16 @@ function mod(n, m) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  document.getElementById("todo_list").addEventListener("click", clickTodo, false);
+  var todoList = document.getElementById("todo_list");
+  todoList.addEventListener("click", clickTodo, false);
+  todoList.addEventListener("change", function(e) {
+    console.log("change", e, e.target);
+    if (e.target.checked) {
+      e.target.parentElement.classList.add("todo-done");
+    } else {
+      e.target.parentElement.classList.remove("todo-done");
+    }
+  }, false);
 });
 
 function navigateKeys(delta) {
@@ -125,10 +157,6 @@ function navigateKeys(delta) {
     index = -1;
   allNavigable[mod(index,  allNavigable.length)].focus();
 }
-
-document.addEventListener("focus", (event) => {
-  console.log(event.target + " FOCUS");
-});
 
 document.addEventListener('keypress', (event) => {
   const keyName = event.key;

@@ -388,7 +388,11 @@ fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Er
         found_any = found_any || found;
     }
 
-    Ok(new_hash)
+    if found_any {
+        Ok(new_hash)
+    } else {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, format!("no todo for hash {}", hash)))
+    }
 }
 
 fn post_todos(mut state: State) -> Box<HandlerFuture> {
@@ -400,19 +404,25 @@ fn post_todos(mut state: State) -> Box<HandlerFuture> {
                 // where server errors become 500 responses.
                 let body_content = String::from_utf8(valid_body.to_vec()).unwrap();
                 let data: TodosPost = serde_json::from_str(&body_content).unwrap();
-                let new_hash = mark_todo_completed(&data.hash, data.completed).unwrap();
-                let res = if !new_hash.is_empty() {
-                    let mut response_string = String::from("{\"hash\": \"");
-                    response_string.push_str(&new_hash);
-                    response_string.push_str("\"}");
-                    create_response(&state, StatusCode::Ok,
-                        Some((response_string.into_bytes(), mime::APPLICATION_JSON)))
-                } else {
-                    create_response(&state, StatusCode::NotFound, None)
-                };
-                future::ok((state, res))
+                match mark_todo_completed(&data.hash, data.completed) {
+                    Ok(new_hash) => {
+                        let res = if !new_hash.is_empty() {
+                            let mut response_string = String::from("{\"hash\": \"");
+                            response_string.push_str(&new_hash);
+                            response_string.push_str("\"}");
+                            create_response(&state, StatusCode::Ok,
+                                Some((response_string.into_bytes(), mime::APPLICATION_JSON)))
+                        } else {
+                            create_response(&state, StatusCode::NotFound, None)
+                        };
+                        future::ok((state, res))
+                    },
+                    Err(msg) => {
+                        future::err((state, msg.into_handler_error()))
+                    }
+                }
             }
-            Err(e) => return future::err((state, e.into_handler_error())),
+            Err(e) => future::err((state, e.into_handler_error())),
         }))
 }
 
