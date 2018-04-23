@@ -2,3 +2,6 @@ x (A) backup files somewhere
 x show TODO.txt
 x allow reading todo lists from multiple files--podcast todo, life todo, project todos, etc.
 x @read this is a test
+x (A) show deadlines on todos
+x show last modification time for journal as "it's been 3 days since you wrote to Journal.txt, and your goal is once every two days!"
+x turn @read and +project into clickable things at least highlight them?

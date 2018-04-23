@@ -9,6 +9,9 @@
     body {
       font-family: 'Oswald', sans-serif;
     }
+    h1 {
+      padding-left: 15px;
+    }
     .unstyled-list {
       list-style: none;
     }
@@ -28,9 +31,7 @@
       color: grey;
       font-size: 80%;
     }
-    .todo-done .due-date-outer {
-      display: none;
-    }
+
     .due-date-outer.due-date-past {
       background: red;
       color: white;
@@ -38,9 +39,10 @@
       padding-left: 4px;
       padding-right: 4px;
     }
-    .due-date-outer.due-date-future {
-      color: grey;
-    }
+    .due-date-outer.due-date-today { color: red; }
+    .due-date-outer.due-date-future { color: grey; }
+    .todo-done .due-date-outer { display: none; }
+
     .priority-label { font-size: 70%; color: grey; }
     .todo-priority-0 { font-size: 150%; }
     .todo-priority-1 { font-size: 120%; }
@@ -140,7 +142,6 @@ document.addEventListener("DOMContentLoaded", function() {
   var todoList = document.getElementById("todo_list");
   todoList.addEventListener("click", clickTodo, false);
   todoList.addEventListener("change", function(e) {
-    console.log("change", e, e.target);
     if (e.target.checked) {
       e.target.parentElement.classList.add("todo-done");
     } else {

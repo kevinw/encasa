@@ -148,11 +148,16 @@ pub fn render(cached_data: &CachedData, json_dump: &str, query_params: &QueryStr
     todos_sorted.sort_by(|a, b| a.priority.cmp(&b.priority));
 
     // filter
-    if !query_params.context.is_empty() {
-        todos_sorted.retain(|t| t.contexts.contains(&query_params.context));
-    }
-    if !query_params.project.is_empty() {
-        todos_sorted.retain(|t| t.projects.contains(&query_params.project));
+    {
+        if !query_params.context.is_empty() {
+            todos_sorted.retain(|t| t.contexts.contains(&query_params.context));
+        }
+        if !query_params.project.is_empty() {
+            todos_sorted.retain(|t| t.projects.contains(&query_params.project));
+        }
+        if !query_params.search.is_empty() {
+            todos_sorted.retain(|t| t.subject.contains(&query_params.search));
+        }
     }
 
     let hello = HelloTemplate {

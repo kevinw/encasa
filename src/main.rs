@@ -313,6 +313,7 @@ mod tests {
 pub struct QueryStringExtractor {
     #[serde(default)] context: String,
     #[serde(default)] project: String,
+    #[serde(default)] search: String,
 }
 
 fn router() -> Router {
@@ -357,7 +358,9 @@ fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Er
                         task.finished = finished;
                         found = true;
                         new_hash.push_str(&task.calc_hash());
-                        lines.push(format!("{}", task));
+                        let new_task_string = format!("{}", task);
+                        println!("new line at {} of {}:\n{}", num, path, new_task_string);
+                        lines.push(new_task_string);
                         continue;
                     }
                 },

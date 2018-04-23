@@ -1,7 +1,8 @@
-x (A) show deadlines on todos
+(A) 2018-04-23 limit the number of modification times to 100?
+(B) 2018-04-23 figure out how to get the server to run always in the background
+(A) 2018-04-23 +homepage sort by due date, then priority
 (A) show "days until" specific google calendar events
 (B) actually check that the journal is growing, not just updated. (should goals have a word count goal? can word count be a measurable statistic?)
-x show last modification time for journal as "it's been 3 days since you wrote to Journal.txt, and your goal is once every two days!"
 how to capture festival submissions for things like http://virtualrealityla.com/
 TO READ folder on desktop--treat some folders as a TODO list in themselves?
 social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal...
@@ -9,4 +10,4 @@ event submission deadlines
 brainstorm more random things like quotes
 last git commit as "last modified" date for project directories
 use (something like) https://github.com/borisyankov/react-sparklines for todo files, file sizes
-x turn @read and +project into clickable things at least highlight them?
+a button to archive old todos
