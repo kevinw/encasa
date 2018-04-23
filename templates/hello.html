@@ -27,17 +27,29 @@
       color: grey;
       text-decoration: none;
     }
+    a.todo-context:hover, a.todo-project:hover {
+      text-decoration: underline
+    }
     .last-updated {
       color: grey;
       font-size: 80%;
     }
+    .due-date-outer {
+      font-size: 80%;
+    }
+    h1 a { text-decoration: none; }
+    h1 a:hover { text-decoration: underline; }
 
+    .due-date-outer.due-date-today {
+      border-radius: 5px;
+      border: 2px solid red;
+      padding: 0 4px 0 4px;
+    }
     .due-date-outer.due-date-past {
       background: red;
       color: white;
       border-radius: 5px;
-      padding-left: 4px;
-      padding-right: 4px;
+      padding: 0 4px 0 4px;
     }
     .due-date-outer.due-date-today { color: red; }
     .due-date-outer.due-date-future { color: grey; }
@@ -49,7 +61,7 @@
   </style>
 </head>
 <body>
-  <h1><span id="total_todos_count">{{ todos_count }}</span> TODOs</h1>
+  <h1><a href="/"><span id="total_todos_count">{{ todos_count }}</span> TODOs</a></h1>
 
   <ul class="unstyled-list navigable-list">
   {% for local_file in local_files %}
@@ -181,6 +193,10 @@ function onKeyPress(event) {
         var elem = getFocusedElement();
         if (elem.nodeName == "INPUT") {
           var links = elem.parentElement.getElementsByTagName('a');
+          links = [].slice.call(links).filter((e) => {
+            var classes = e.classList;
+            return !classes.contains("todo-context") && !classes.contains("todo-project");
+          })
           if (links.length > 0) {
             links[0].click();
             return false;
@@ -216,6 +232,7 @@ document.addEventListener("DOMContentLoaded", function() {
 function navigateKeys(delta) {
   var elem = getFocusedElement();
   var allNavigable = [].slice.call(document.getElementsByClassName("navigable-elem"));
+
   var index = allNavigable.indexOf(elem) + delta;
   if (index < -1)
     index = -1;
