@@ -1,4 +1,4 @@
-use {CachedData, LocalFileDescWithState, QueryStringExtractor};
+use {CachedData, LocalFileDescWithState};
 use todo::Task;
 
 use askama::Template;
@@ -167,7 +167,7 @@ fn due_date_sort(a: &Task) -> i32 {
 }
 
 
-pub fn render(cached_data: &CachedData, json_dump: &str, query_params: &QueryStringExtractor) -> String {
+pub fn render(cached_data: &CachedData, json_dump: &str, query_params: &::routes::QueryStringExtractor) -> String {
     let mut todos_sorted = cached_data.todos.clone();
 
     todos_sorted.sort_by_key(|a| { (due_date_sort(&a), a.priority) });

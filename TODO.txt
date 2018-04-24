@@ -1,7 +1,8 @@
-(A) 2018-04-23 find a way to use auto_project without breaking hashing
+(A) 2018-04-23 prevent clicking on labels from marking todos (too many accidents!) due:2018-04-24
+(B) 2018-04-23 find a way to use auto_project without breaking hashing
 (B) 2018-04-23 figure out how to get the server to run always in the background
-(A) 2018-04-23 +homepage sort by due date, then priority
-(A) show "days until" specific google calendar events
+(B) 2018-04-23 +homepage sort by due date, then priority
+(B) show "days until" specific google calendar events
 (B) actually check that the journal is growing, not just updated. (should goals have a word count goal? can word count be a measurable statistic?)
 how to capture festival submissions for things like http://virtualrealityla.com/
 TO READ folder on desktop--treat some folders as a TODO list in themselves?
