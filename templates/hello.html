@@ -40,7 +40,7 @@
 }
 
     body {
-      font-family: 'Oswald', sans-serif;
+      font-family: Arial; /* 'Oswald', sans-serif; */
     }
     h1 {
       padding-left: 15px;
@@ -78,7 +78,7 @@
       border: 2px solid red;
       padding: 0 4px 0 4px;
     }
-    .due-date-outer.due-date-past {
+    .due-date-outer.due-date-past, .local-file-needs-update {
       background: red;
       color: white;
       border-radius: 5px;
@@ -100,8 +100,7 @@
   {% for local_file in local_files %}
     <li{% if local_file.needs_update() %} class="needs-update"{% endif %}>
       <a class="navigable-elem" href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.readable_name() }}</a>
-      <span class="last-updated">
-        {% if local_file.needs_update() %}&#x2757; {% endif %}
+      <span class="last-updated{% if local_file.needs_update() %} local-file-needs-update{% endif %}">
         last updated {{ local_file.duration_since_modified()|humanize_duration }}
       </span>
     </li>
@@ -112,7 +111,7 @@
   {% for todo in todos %}
       <li class="todo-priority-{{ todo.priority }}{% if todo.finished %} todo-done{% endif %}">
       <input class="navigable-elem" type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.calc_hash() }}"{% if todo.finished %} checked{% endif %}>
-      <label for="todo-{{- loop.index0 }}">
+      <label> <!-- for="todo-{{- loop.index0 }}"> -->
         <span class="priority-label">{{ todo.priority_label() }}</span>
         {{ todo.subject|linkify|spanify|safe }}
         {% match todo.due_date %}
@@ -132,146 +131,7 @@
   -->
 
 <script>
-function removeElement(array, elem) {
-  var index = array.indexOf(elem);
-  if (index > -1) {
-    array.splice(index, 1);
-  }
-}
-
-var activeRequests = [];
-
-function postJSON(url, data, cb) {
-  console.log("POST " + url + " " + JSON.stringify(data));
-  function reqListener() {
-    console.log(this.response);
-  }
-  var xhr = new XMLHttpRequest();
-  xhr.addEventListener("load", reqListener);
-  xhr.open("POST", "/todos");
-
-  xhr.setRequestHeader('Content-Type', 'application/json');
-
-  activeRequests.push(xhr);
-
-  xhr.onreadystatechange = function() {
-    if (this.readyState != 4)
-      return;
-
-    removeElement(activeRequests, xhr);
-
-    if (this.status == 200) {
-      if (cb) {
-        var res = JSON.parse(this.responseText);
-        cb(res);
-      }
-    } else {
-      console.error(this.responseText);
-      alert(this.responseText);
-    }
-  };
-
-  xhr.send(JSON.stringify(data));
-}
-
-function markTodo(hash, completed, cb) {
-  postJSON("/todos", { hash: hash, completed: completed }, cb);
-}
-
-function clickTodo(e) {
-  var node = e.target;
-  if (node.nodeName !== "INPUT")
-    return;
-
-  var hash = node.getAttribute("value");
-  var markFinished = node.checked;
-  markTodo(hash, markFinished, function(res) {
-    if (res.hash) {
-      node.value = res.hash;
-    }
-  });
-}
-
-function getFocusedElement() {
-  if (document.hasFocus() &&
-      document.activeElement !== document.body &&
-      document.activeElement !== document.documentElement)
-  {
-      return document.activeElement;
-  }
-}
-
-function mod(n, m) {
-  return ((n % m) + m) % m;
-}
-
-function onKeyPress(event) {
-  const keyName = event.key;
-  switch (keyName) {
-      case "j":
-        navigateKeys(1);
-        return false;
-      case "k":
-        navigateKeys(-1);
-        return false;
-      case "x":
-        var elem = getFocusedElement();
-        if (elem.nodeName == "INPUT") {
-          elem.checked = !elem.checked;
-          return false;
-        }
-        break;
-      case "Enter":
-        // If in a TODO list, enter follows the link.
-        var elem = getFocusedElement();
-        if (elem.nodeName == "INPUT") {
-          var links = elem.parentElement.getElementsByTagName('a');
-          links = [].slice.call(links).filter((e) => {
-            var classes = e.classList;
-            return !classes.contains("todo-context") && !classes.contains("todo-project");
-          })
-          if (links.length > 0) {
-            links[0].click();
-            return false;
-          }
-        }
-        break;
-  }
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-  var todoList = document.getElementById("todo_list");
-  todoList.addEventListener("click", clickTodo, false);
-  todoList.addEventListener("change", function(e) {
-    if (e.target.checked) {
-      e.target.parentElement.classList.add("todo-done");
-    } else {
-      e.target.parentElement.classList.remove("todo-done");
-    }
-  }, false);
-
-  window.addEventListener("beforeunload", function (e) {
-    if (activeRequests.length === 0)
-      return;
-
-    var confirmationMessage = "There are pending requests; are you sure you want to navigate away?";
-    e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
-    return confirmationMessage;              // Gecko, WebKit, Chrome <34
-  });
-
-  document.addEventListener('keypress', onKeyPress);
-});
-
-function navigateKeys(delta) {
-  var elem = getFocusedElement();
-  var allNavigable = [].slice.call(document.getElementsByClassName("navigable-elem"));
-
-  var index = allNavigable.indexOf(elem) + delta;
-  if (index < -1)
-    index = -1;
-  allNavigable[mod(index,  allNavigable.length)].focus();
-}
-
+{% include "main.js" %}
 </script>
 
 </body>

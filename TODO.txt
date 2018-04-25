@@ -1,4 +1,3 @@
-(A) 2018-04-23 prevent clicking on labels from marking todos (too many accidents!) due:2018-04-24
 (B) 2018-04-23 find a way to use auto_project without breaking hashing
 (B) 2018-04-23 figure out how to get the server to run always in the background
 (B) 2018-04-23 +homepage sort by due date, then priority

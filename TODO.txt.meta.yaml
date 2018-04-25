@@ -100,3 +100,15 @@ states:
       secs_since_epoch: 1524527459
       nanos_since_epoch: 788931900
     size: 1033
+  - modification_time:
+      secs_since_epoch: 1524604764
+      nanos_since_epoch: 454438600
+    size: 1032
+  - modification_time:
+      secs_since_epoch: 1524604910
+      nanos_since_epoch: 924316500
+    size: 1034
+  - modification_time:
+      secs_since_epoch: 1524605552
+      nanos_since_epoch: 690951800
+    size: 935

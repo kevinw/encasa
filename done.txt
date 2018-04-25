@@ -6,3 +6,4 @@ x (A) show deadlines on todos
 x show last modification time for journal as "it's been 3 days since you wrote to Journal.txt, and your goal is once every two days!"
 x turn @read and +project into clickable things at least highlight them?
 x (A) 2018-04-23 limit the number of modification times to 100?
+x (A) 2018-04-23 prevent clicking on labels from marking todos (too many accidents!) due:2018-04-24
