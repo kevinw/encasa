@@ -21,6 +21,9 @@ service = build('calendar', 'v3', http=creds.authorize(Http()))
 # Call the Calendar API
 now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
 
+calendar_ids = service.calendarList().list().execute()
+print(pformat(calendar_ids))
+
 events_result = service.events().list(calendarId='primary', timeMin=now,
                                       maxResults=50, singleEvents=True,
                                       orderBy='startTime').execute()

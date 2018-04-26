@@ -50,8 +50,7 @@ impl ::std::str::FromStr for Task
 {
     type Err = ();
 
-    fn from_str(s: &str) -> Result<Task, ()>
-    {
+    fn from_str(s: &str) -> Result<Task, ()> {
         task(&s.to_owned())
     }
 }
