@@ -68,7 +68,10 @@ pub struct LocalFileDesc {
 }
 
 impl LocalFileDesc {
-    fn expanded_path(&self) -> String { shellexpand::tilde(&self.path).to_string() }
+    fn expanded_path(&self) -> String {
+        shellexpand::tilde(&self.path).to_string()
+    }
+
     fn readable_name(&self) -> &str {
         if self.name.is_empty() {
             &self.path
@@ -116,12 +119,17 @@ impl LocalFileDescWithState {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
+pub struct TaskWithContext {
+    pub task:Task,
+    pub auto_project:String,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CachedData
-{
+pub struct CachedData {
     last_update: SystemTime,
     todos_count: usize,
-    todos: Vec<Task>,
+    todos: Vec<TaskWithContext>,
     local_files: Vec<LocalFileDescWithState>,
 }
 
@@ -296,7 +304,7 @@ fn get_events() -> Result<Deadlines, std::io::Error> {
 
 fn update_data() -> Result<CachedData, ::std::io::Error> {
     let mut todos_count:usize = 0;
-    let mut all_todos:Vec<Task> = vec![];
+    let mut all_todos:Vec<TaskWithContext> = vec![];
 
     let _events = get_events()?;
 
@@ -313,7 +321,10 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
             todos_count += todos.iter().filter(|c| !c.finished).count();
             //println!("{} total todos in {}", todos.len(), path);
             for todo in &todos {
-                all_todos.push(todo.clone());
+                all_todos.push(TaskWithContext {
+                    task: todo.clone(),
+                    auto_project: local_file.auto_project.clone(),
+                });
             }
         }
 

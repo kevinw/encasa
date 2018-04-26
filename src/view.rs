@@ -3,6 +3,25 @@ use todo::Task;
 
 use askama::Template;
 
+impl TaskWithContext {
+    fn should_show_auto_project(&self) -> bool {
+        !self.auto_project.is_empty() && !self.task.projects.contains(&self.auto_project)
+    }
+
+    fn subject_with_auto_project(&self) -> String {
+        if self.should_show_auto_project() {
+            let mut s = String::with_capacity(1 + self.auto_project.len() + 1 + self.task.subject.len());
+            s.push_str("+");
+            s.push_str(&self.auto_project);
+            s.push_str(" ");
+            s.push_str(&self.task.subject);
+            s
+        } else {
+            self.task.subject.clone()
+        }
+    }
+}
+
 impl Task {
     fn priority_label(&self) -> String {
         let letters:[&str; 26] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
@@ -142,13 +161,15 @@ mod filters {
     }
 }
 
+use ::TaskWithContext;
+
 #[derive(Template)]
 #[template(path = "hello.html")]
 struct HelloTemplate<'a> {
     json_dump: &'a str,
     todos_count: usize,
     local_files: &'a Vec<LocalFileDescWithState>,
-    todos: &'a Vec<Task>,
+    todos: &'a Vec<TaskWithContext>,
 }
 
 fn due_date_sort(a: &Task) -> i32 {
@@ -170,18 +191,18 @@ fn due_date_sort(a: &Task) -> i32 {
 pub fn render(cached_data: &CachedData, json_dump: &str, query_params: &::routes::QueryStringExtractor) -> String {
     let mut todos_sorted = cached_data.todos.clone();
 
-    todos_sorted.sort_by_key(|a| { (due_date_sort(&a), a.priority) });
+    todos_sorted.sort_by_key(|a| { (due_date_sort(&a.task), a.task.priority) });
 
     // filter
     {
         if !query_params.context.is_empty() {
-            todos_sorted.retain(|t| t.contexts.contains(&query_params.context));
+            todos_sorted.retain(|t| t.task.contexts.contains(&query_params.context));
         }
         if !query_params.project.is_empty() {
-            todos_sorted.retain(|t| t.projects.contains(&query_params.project));
+            todos_sorted.retain(|t| t.task.projects.contains(&query_params.project) || t.auto_project == query_params.project);
         }
         if !query_params.search.is_empty() {
-            todos_sorted.retain(|t| t.subject.contains(&query_params.search));
+            todos_sorted.retain(|t| t.task.subject.contains(&query_params.search));
         }
     }
 
