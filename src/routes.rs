@@ -114,3 +114,27 @@ pub fn index(mut state: State) -> (State, Response) {
     (state, res)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gotham::test::TestServer;
+
+    #[test]
+    fn receive_hello_world_response() {
+        let test_server = TestServer::new(|| Ok(index)).unwrap();
+        let response = test_server
+            .client()
+            .get("http://localhost")
+            .perform()
+            .unwrap();
+
+        let status_code = response.status();
+
+        let body = response.read_body().unwrap();
+        assert!(body.len() > 0);
+
+        let body_str = String::from_utf8(body).unwrap();
+        assert_eq!(status_code, StatusCode::Ok, "body was {}", body_str);
+
+    }
+}

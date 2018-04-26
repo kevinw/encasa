@@ -27,6 +27,8 @@ chrono = { version = "*", features = ["serde"] }
 shellexpand = "*"
 linkify = "*"
 
+humantime = "*"
+
 [dependencies.nom]
 version = "^3.2"
 

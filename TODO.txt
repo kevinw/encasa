@@ -1,8 +1,8 @@
-(B) 2018-04-23 find a way to use auto_project without breaking hashing
+x (B) 2018-04-23 find a way to use auto_project without breaking hashing
 (B) 2018-04-23 figure out how to get the server to run always in the background
 (B) 2018-04-23 +homepage sort by due date, then priority
 (B) show "days until" specific google calendar events
-(B) actually check that the journal is growing, not just updated. (should goals have a word count goal? can word count be a measurable statistic?)
+x (B) actually check that the journal is growing, not just updated. (should goals have a word count goal? can word count be a measurable statistic?)
 consider using a CSS framework like https://bulma.io/ for grids, etc.
 how to capture festival submissions for things like http://virtualrealityla.com/
 TO READ folder on desktop--treat some folders as a TODO list in themselves?

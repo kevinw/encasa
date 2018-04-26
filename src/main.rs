@@ -16,6 +16,7 @@ extern crate serde_json;
 extern crate serde_yaml;
 extern crate shellexpand;
 extern crate linkify;
+extern crate humantime;
 
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate nom;
@@ -57,15 +58,33 @@ impl HomepageMeta {
     }
 }
 
+fn seconds_from_humantime(s: &str) -> i64 {
+    let duration = humantime::parse_duration(&s).unwrap();
+    let seconds = duration.as_secs();
+    seconds as i64
+}
+
+use serde::de::{Deserialize, Deserializer};
+fn deserialize_humantime<'a, D>(deserializer: D) -> std::result::Result<i64, D::Error>
+    where D: Deserializer<'a>
+{
+    let s = String::deserialize(deserializer)?;
+    Ok(seconds_from_humantime(&s))
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LocalFileDesc {
     #[serde(default)] name: String,
     path: String,
     #[serde(default)] todos: bool,
-    #[serde(default)] frequency_goal_seconds: i64,
+
+    #[serde(default)]
+    #[serde(deserialize_with = "deserialize_humantime")]
+    frequency_goal_seconds: i64,
 
     #[serde(default)] auto_project: String,
 }
+
 
 impl LocalFileDesc {
     fn expanded_path(&self) -> String {
@@ -364,28 +383,17 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gotham::test::TestServer;
-
-    #[test]
-    fn receive_hello_world_response() {
-        let test_server = TestServer::new(|| Ok(index)).unwrap();
-        let response = test_server
-            .client()
-            .get("http://localhost")
-            .perform()
-            .unwrap();
-
-        assert_eq!(response.status(), StatusCode::Ok);
-
-        let body = response.read_body().unwrap();
-        assert!(body.len() > 0);
-    }
 
     #[test]
     fn parse_new_yaml() {
         let cached_data = update_data().expect("update_data failed");
         let _json = serde_json::to_string_pretty(&cached_data).unwrap();
-        //println!("{}", json);
+    }
+
+    #[test]
+    fn humantime_parsing() {
+        assert_eq!(seconds_from_humantime("86400secs"), 86400);
+        assert_eq!(seconds_from_humantime("1day"), 86400);
     }
 }
 
