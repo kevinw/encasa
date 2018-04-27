@@ -10,7 +10,7 @@ use gotham::handler::{HandlerFuture, IntoHandlerError};
 
 use futures::{future, Future, Stream};
 
-use ::{view};
+use ::{view, update_data, mark_todo_completed, archive_finished_tasks};
 use serde_json;
 use mime;
 
@@ -23,38 +23,16 @@ pub struct QueryStringExtractor {
     #[serde(default)] pub search: String,
 }
 
-use ::{update_data, mark_todo_completed};
+#[derive(Deserialize, Serialize)]
+pub struct ArchiveFinishedResponse {
+    pub num_archived: i32,
+}
+
 
 #[derive(Deserialize)]
 struct TodosPost {
     hash: String,
     completed: bool,
-}
-
-use std::io::{BufReader, Read};
-use std::fs::File;
-
-fn get_file_bytes(path: &str) -> Vec<u8> {
-    let mut buf = Vec::new();
-    BufReader::new(File::open(path).unwrap()).read_to_end(&mut buf).unwrap();
-    buf
-}
-
-fn get_font(path: &str) -> Option<(Vec<u8>, mime::Mime)> {
-    let mime_type: mime::Mime = "font/woff2".parse().unwrap();
-    Some((get_file_bytes(path), mime_type))
-}
-
-#[allow(non_snake_case)]
-pub fn TK3iWkUHHAIjg752GT8G(state: State) -> (State, Response) {
-    let resp = create_response(&state, StatusCode::Ok, get_font("static/TK3iWkUHHAIjg752GT8G.woff2"));
-    (state, resp)
-}
-
-#[allow(non_snake_case)]
-pub fn TK3iWkUHHAIjg752HT8Ghe4(state: State) -> (State, Response) {
-    let resp = create_response(&state, StatusCode::Ok, get_font("static/TK3iWkUHHAIjg752GT8Ghe4.woff2"));
-    (state, resp)
 }
 
 pub fn router() -> Router {
@@ -66,13 +44,26 @@ pub fn router() -> Router {
             .get("/")
             .with_query_string_extractor::<QueryStringExtractor>()
             .to(index);
-        route.get("/fonts/TK3iWkUHHAIjg752GT8G.woff2")
-            .to(TK3iWkUHHAIjg752GT8G);
-        route.get("/fonts/TK3iWkUHHAIjg752GT8Ghe4.woff2")
-            .to(TK3iWkUHHAIjg752HT8Ghe4);
+        route
+            .post("/actions/archive_finished")
+            .to(archive_finished);
     })
 }
 
+fn archive_finished(state: State) -> Box<HandlerFuture> {
+    match archive_finished_tasks() {
+        Ok(num_archived) => {
+            let serialized = serde_json::to_string_pretty(
+                &ArchiveFinishedResponse { num_archived }).unwrap();
+            let resp = create_response(&state, StatusCode::Ok,
+                Some((serialized.into_bytes(), mime::APPLICATION_JSON)));
+            Box::new(future::ok((state, resp)))
+        },
+        Err(e) => {
+            Box::new(future::err((state, e.into_handler_error())))
+        }
+    }
+}
 
 fn post_todos(mut state: State) -> Box<HandlerFuture> {
     Box::new(Body::take_from(&mut state)

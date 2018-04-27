@@ -206,6 +206,10 @@ fn parse_todo_file(path: &str) -> Result<Vec<Task>, std::io::Error> {
     Ok(tasks)
 }
 
+fn archive_finished_tasks() -> Result<i32, std::io::Error> {
+    Ok(0)
+}
+
 fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Error> {
     let meta = HomepageMeta::from_local_config()?;
     let mut found_any = false;

@@ -42,6 +42,12 @@ function postJSON(url, data, cb) {
   xhr.send(JSON.stringify(data));
 }
 
+function archiveFinishedTasks() {
+  postJSON("/actions/archive_finished", {}, function(res) {
+    console.log(res);
+  });
+}
+
 function markTodo(hash, completed, cb) {
   postJSON("/todos", { hash: hash, completed: completed }, cb);
 }
@@ -87,6 +93,8 @@ function handleKeySequences(keyName) {
     keySequence.length = 0;
     navigateToFirst();
     return false;
+  } else if (len > 1 && keySequence[len - 2] === "\\" && keySequence[len - 1] === "D") {
+    archiveFinishedTasks();
   }
 }
 
@@ -127,6 +135,8 @@ function onKeyPress(event) {
       case "G":
         navigateToLast();
         return false;
+    default:
+      console.log("key: " + keyName);
   }
 }
 

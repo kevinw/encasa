@@ -7,3 +7,6 @@ x show last modification time for journal as "it's been 3 days since you wrote t
 x turn @read and +project into clickable things at least highlight them?
 x (A) 2018-04-23 limit the number of modification times to 100?
 x (A) 2018-04-23 prevent clicking on labels from marking todos (too many accidents!) due:2018-04-24
+x (B) 2018-04-23 find a way to use auto_project without breaking hashing
+x (B) 2018-04-23 +homepage sort by due date, then priority
+x (B) actually check that the journal is growing, not just updated. (should goals have a word count goal? can word count be a measurable statistic?)
