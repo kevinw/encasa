@@ -29,12 +29,10 @@ linkify = "*"
 
 humantime = "*"
 
-[dependencies.nom]
-version = "^3.2"
+nom = { version = "^3.2" }
 
-[dependencies.lazy_static]
-version = "1.0.0"
+lazy_static = { version = "1.0.0" }
 
-[dependencies.regex]
-version = "^0.2"
+regex = { version = "^0.2" }
 
+clap = "*"

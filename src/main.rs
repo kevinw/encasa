@@ -21,6 +21,7 @@ extern crate humantime;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate nom;
 extern crate regex;
+extern crate clap;
 
 mod view;
 mod todo;
@@ -402,9 +403,8 @@ mod tests {
 }
 
 mod routes;
+mod cli;
 
 pub fn main() {
-    let addr = "127.0.0.1:7878";
-    println!("Listening for requests at http://{}", addr);
-    gotham::start(addr, routes::router());
+    cli::run_command_line();
 }
