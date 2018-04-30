@@ -1,7 +1,7 @@
-use {CachedData, LocalFileDescWithState};
+use {CachedData, LocalFileDescWithState, Deadlines};
 use todo::Task;
-
 use askama::Template;
+use datetools::{DateWhen, duration_relative_to_today};
 
 impl TaskWithContext {
     fn should_show_auto_project(&self) -> bool {
@@ -35,39 +35,12 @@ impl Task {
     }
 }
 
-enum DateWhen {
-    Past,
-    Future,
-    Today,
-}
 
-fn duration_relative_to_today(date: &::chrono::NaiveDate) -> ::time::Duration {
-    let today_naive = ::chrono::Local::today().naive_local();
-    today_naive.signed_duration_since(*date)
-}
-
-impl DateWhen {
-    fn for_duration(d: ::time::Duration) -> DateWhen {
-        if d < ::time::Duration::zero() {
-            DateWhen::Future
-        } else if d > ::time::Duration::zero() {
-            DateWhen::Past
-        } else {
-            DateWhen::Today
-        }
-    }
-
-    fn for_date(date: &::chrono::NaiveDate) -> DateWhen {
-        let duration = duration_relative_to_today(date);
-        DateWhen::for_duration(duration)
-    }
-}
-
-mod filters {
+pub mod filters {
     use regex::Regex;
     use ::{askama, std, linkify};
     use time;
-    use super::DateWhen;
+    use datetools::DateWhen;
     
     pub fn date_when_css_class(d: &::chrono::NaiveDate) -> askama::Result<String> {
         Ok(match DateWhen::for_date(d) {
@@ -170,6 +143,7 @@ struct HelloTemplate<'a> {
     todos_count: usize,
     local_files: &'a Vec<LocalFileDescWithState>,
     todos: &'a Vec<TaskWithContext>,
+    deadlines: &'a Deadlines,
 }
 
 fn due_date_sort(a: &Task) -> i32 {
@@ -188,7 +162,13 @@ fn due_date_sort(a: &Task) -> i32 {
 }
 
 
-pub fn render(cached_data: &CachedData, json_dump: &str, query_params: &::routes::QueryStringExtractor) -> String {
+pub fn render(
+    cached_data: &CachedData,
+    json_dump: &str,
+    query_params: &::routes::QueryStringExtractor,
+    
+    ) -> String {
+
     let mut todos_sorted = cached_data.todos.clone();
 
     todos_sorted.sort_by_key(|a| { (due_date_sort(&a.task), a.task.priority) });
@@ -211,6 +191,7 @@ pub fn render(cached_data: &CachedData, json_dump: &str, query_params: &::routes
         todos_count: cached_data.todos_count,
         local_files: &cached_data.local_files,
         todos: &todos_sorted,
+        deadlines: &cached_data.deadlines,
     };
 
     hello.render().unwrap()

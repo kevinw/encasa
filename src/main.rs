@@ -26,6 +26,7 @@ extern crate clap;
 mod view;
 mod todo;
 mod gcal;
+mod datetools;
 
 pub use chrono::NaiveDate as Date;
 
@@ -151,6 +152,7 @@ pub struct CachedData {
     todos_count: usize,
     todos: Vec<TaskWithContext>,
     local_files: Vec<LocalFileDescWithState>,
+    deadlines: Deadlines,
 }
 
 
@@ -320,7 +322,7 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
     Ok(history)
 }
 
-fn get_events() -> Result<Deadlines, std::io::Error> {
+fn get_deadlines() -> Result<Deadlines, std::io::Error> {
     let deadlines:Deadlines = serde_yaml::from_str(&get_file_contents(DEADLINES_JSON_PATH)?).expect(
         &format!("Couldn't parse JSON at {}", DEADLINES_JSON_PATH));
     Ok(deadlines)
@@ -330,7 +332,7 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
     let mut todos_count:usize = 0;
     let mut all_todos:Vec<TaskWithContext> = vec![];
 
-    let _events = get_events()?;
+    let deadlines = get_deadlines()?;
 
     let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
         .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH));
@@ -373,7 +375,7 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
         files.push(LocalFileDescWithState {
             desc: local_file.clone(),
             states: history.states,
-            update_state: update_state
+            update_state,
         });
     }
 
@@ -381,7 +383,8 @@ fn update_data() -> Result<CachedData, ::std::io::Error> {
         last_update: SystemTime::now(),
         todos_count,
         todos: all_todos,
-        local_files: files
+        local_files: files,
+        deadlines,
     })
 }
 

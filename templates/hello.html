@@ -62,6 +62,14 @@
 <body>
   <h1><a href="/"><span id="total_todos_count">{{ todos_count }}</span> TODOs</a></h1>
 
+  <h3>deadlines</h3>
+  {% for deadline in deadlines.deadlines %}
+  <p>
+  <a href="{{ deadline.htmlLink }}">{{ deadline.summary }}</a> 
+  {{ deadline.start.to_naive_date().unwrap()|humanize_date }}
+  </p>
+  {% endfor %}
+
   <ul class="unstyled-list navigable-list">
   {% for local_file in local_files %}
     <li{% if local_file.needs_update() %} class="needs-update"{% endif %}>

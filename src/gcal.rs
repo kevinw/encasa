@@ -1,36 +1,33 @@
 #![allow(non_snake_case)]
 
-//use chrono::prelude::*;
-//use chrono::offset::LocalResult;
-//use chrono::format::{ParseResult, ParseError};
+use chrono;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct DateEntry {
-    #[serde(default)] date: String,
-    #[serde(default)] dateTime: String,
-    #[serde(default)] timeZone: String,
+pub struct DateEntry {
+    #[serde(default)] pub date: String,
+    #[serde(default)] pub dateTime: String,
+    #[serde(default)] pub timeZone: String,
 }
 
-/*
 impl DateEntry {
-    fn to_chrono_datetime(&self) -> ParseResult<DateTime<Local>> {
-        println!("datetime_from_str on {}", self.date);
-        Local.datetime_from_str(&self.date, "%Y-%m-%d")
+    pub fn to_naive_date(&self) -> chrono::format::ParseResult<chrono::NaiveDate> {
+        assert!(self.dateTime.is_empty());
+        assert!(self.timeZone.is_empty());
+        chrono::NaiveDate::parse_from_str(&self.date, "%Y-%m-%d")
     }
 }
-*/
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Event {
-    summary: String,
-    description: String,
-    htmlLink: String,
-    start: DateEntry,
+    pub summary: String,
+    pub description: String,
+    pub htmlLink: String,
+    pub start: DateEntry,
 }
 
 #[cfg(test)]
 mod tests {
-    //use super::*;
+    use super::*;
     //use serde_json;
     use time;
 
@@ -60,4 +57,26 @@ mod tests {
             Err(e) => println!("Error: {}", e),
         };
     }
+
+    use ::chrono;
+
+    #[test]
+    fn parse_gcal_event() {
+        let evt = Event {
+            summary: "Summary blah".to_string(),
+            description: "This is a desc".to_string(),
+            htmlLink: "http://google.com".to_string(),
+            start: DateEntry {
+                date: "2018-05-04".to_string(),
+                dateTime: String::new(),
+                timeZone: String::new(),
+            },
+        };
+
+        let date = evt.start.to_naive_date().unwrap();
+        let s = ::view::filters::humanize_date(&date).unwrap();
+        println!("event relative to today: {}", s);
+
+    }
+
 }
