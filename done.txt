@@ -12,3 +12,6 @@ x (B) 2018-04-23 +homepage sort by due date, then priority
 x (B) actually check that the journal is growing, not just updated. (should goals have a word count goal? can word count be a measurable statistic?)
 x (A) rustfest deadline with subgoal deadlines due:2018-04-27
 x (A) cache-control no-store ? why does checking "change password hint on desktop" sometimes affect GDC cards??
+x (B) divide html template into its own module for compilation speed; add a time-took display to cargo watch
+x (B) show "days until" specific google calendar events
+x event submission deadlines
