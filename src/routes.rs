@@ -10,9 +10,11 @@ use gotham::handler::{HandlerFuture, IntoHandlerError};
 
 use futures::{future, Future, Stream};
 
-use ::{view, update_data, mark_todo_completed, archive_finished_tasks};
+use homepage_data::{update_data, mark_todo_completed, archive_finished_tasks};
 use serde_json;
 use mime;
+
+use homepage_view;
 
 header! { (XFrameOptions, "X-Frame-Options") => [String] }
 
@@ -21,6 +23,18 @@ pub struct QueryStringExtractor {
     #[serde(default)] pub context: String,
     #[serde(default)] pub project: String,
     #[serde(default)] pub search: String,
+}
+
+// TODO: how to mirror these structs better? #[derive(StateData, StaticResponseExtender)] is the
+// rub here. I don't want to require gotham inside homepage_data or homepage_view
+impl QueryStringExtractor {
+    pub fn to_search_params(&self) -> homepage_view::SearchParams {
+        homepage_view::SearchParams {
+            context: self.context.clone(),
+            project: self.project.clone(),
+            search: self.search.clone(),
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -99,7 +113,8 @@ fn post_todos(mut state: State) -> Box<HandlerFuture> {
 pub fn index(mut state: State) -> (State, Response) {
     let cached_data = update_data().unwrap();
     let serialized = serde_json::to_string_pretty(&cached_data).unwrap();
-    let html_bytes = view::render(&cached_data, &serialized, &QueryStringExtractor::take_from(&mut state)).into_bytes();
+    let search_params = QueryStringExtractor::take_from(&mut state).to_search_params();
+    let html_bytes = homepage_view::render(&cached_data, &serialized, &search_params).into_bytes();
     let mut res = create_response(&state, StatusCode::Ok, Some((html_bytes, mime::TEXT_HTML)));
     res.headers_mut().set(XFrameOptions("ALLOW FROM file://".to_owned()));
     (state, res)

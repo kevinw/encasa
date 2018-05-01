@@ -1,29 +1,20 @@
 [package]
-name = "homepage"
+name = "homepage_data"
 version = "0.1.0"
 authors = ["Kevin Watters <kevinwatters@gmail.com>"]
 
 [dependencies]
-homepage_data = { path = "./src/homepage_data" }
-homepage_view = { path = "./src/homepage_view" }
-
-time = "*"
-gotham = "*"
-gotham_derive = "*"
-
-hyper = "0.11"
-futures = "0.1"
-mime = "0.3"
-
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
 serde_yaml = "*"
-
+time = "*"
 chrono = { version = "*", features = ["serde"] }
-
 shellexpand = "*"
-
+lazy_static = { version = "1.0.0" }
+nom = { version = "^3.2" }
 regex = { version = "^0.2" }
+humantime = "*"
 
-clap = "*"
+
+

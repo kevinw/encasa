@@ -24,6 +24,17 @@ impl Task {
         self.hash(&mut hasher);
         format!("{:x}", hasher.finish())
     }
+
+    pub fn priority_label(&self) -> String {
+        let letters:[&str; 26] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+        if self.priority < 26 {
+            format!("({})", letters[self.priority as usize])
+        } else if self.priority == 26 {
+            "".into()
+        } else {
+            "(?)".into()
+        }
+    }
 }
 
 impl Default for Task

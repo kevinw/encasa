@@ -1,0 +1,19 @@
+[package]
+name = "homepage_view"
+version = "0.1.0"
+authors = ["Kevin Watters <kevinwatters@gmail.com>"]
+
+[build-dependencies]
+askama = "0.6.3"
+
+[dependencies]
+homepage_data = { path = "../homepage_data" }
+askama = "0.6.3"
+
+serde = "*"
+serde_derive = "*"
+chrono = { version = "*", features = ["serde"] }
+regex = { version = "^0.2" }
+linkify = "*"
+time = "*"
+lazy_static = { version = "1.0.0" }
