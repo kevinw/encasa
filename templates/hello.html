@@ -5,70 +5,20 @@
   <title>&#x1f3e1; {{ todos_count }} TODOs</title>
   <base target="_parent">
   <style>
-    body {
-      font-family: Arial; /* 'Oswald', sans-serif; */
-    }
-    h1 {
-      padding-left: 15px;
-    }
-    .unstyled-list {
-      list-style: none;
-    }
-    .todo-done label {
-        text-decoration: line-through;
-        color: grey;
-    }
-    .navigable-list li:focus-within {
-      background-color: cyan;
-    }
-    /* .navigable-list :nth-child(odd) { background: #efefef; } */
-    .todo-context, .todo-project {
-      color: grey;
-      text-decoration: none;
-    }
-    a.todo-context:hover, a.todo-project:hover {
-      text-decoration: underline
-    }
-    .last-updated {
-      color: grey;
-      font-size: 80%;
-    }
-    .due-date-outer {
-      font-size: 80%;
-    }
-    h1 a { text-decoration: none; }
-    h1 a:hover { text-decoration: underline; }
-
-    .due-date-outer.due-date-today {
-      border-radius: 5px;
-      border: 2px solid red;
-      padding: 0 4px 0 4px;
-    }
-    .due-date-outer.due-date-past, .local-file-needs-update {
-      background: red;
-      color: white;
-      border-radius: 5px;
-      padding: 0 4px 0 4px;
-    }
-    .due-date-outer.due-date-today { color: red; }
-    .due-date-outer.due-date-future { color: grey; }
-    .todo-done .due-date-outer { display: none; }
-
-    .priority-label { font-size: 70%; color: grey; }
-    .todo-priority-0 { font-size: 150%; }
-    .todo-priority-1 { font-size: 120%; }
+    {% include "style.css" %}
   </style>
 </head>
 <body>
   <h1><a href="/"><span id="total_todos_count">{{ todos_count }}</span> TODOs</a></h1>
 
-  <h3>deadlines</h3>
+  <ul class="deadlines unstyled-list navigable-list">
   {% for deadline in deadlines.deadlines %}
-  <p>
-  <a href="{{ deadline.htmlLink }}">{{ deadline.summary }}</a> 
-  {{ deadline.start.to_naive_date().unwrap()|humanize_date }}
-  </p>
+    <li>
+      <a class="navigable-elem" href="{{ deadline.htmlLink }}">&#x23F0; {{ deadline.summary }}</a> 
+      {{ deadline.start.to_naive_date().unwrap()|humanize_date }}
+    </li>
   {% endfor %}
+  </ul>
 
   <ul class="unstyled-list navigable-list">
   {% for local_file in local_files %}

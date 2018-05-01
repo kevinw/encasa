@@ -48,8 +48,10 @@ def parse_date_or_datetime(t):
         assert 'date' not in t
         return dateutil.parser.parse(t['dateTime'])
 
+count = 0
 for event in events:
     if "#deadline" in event.get('description', ''):
+        count += 1
         start = event['start'].get('dateTime', event['start'].get('date'))
         # print(start, event['summary'])
         print(start, pformat(event))
@@ -65,4 +67,6 @@ import json
 json_output = json.dumps(output, indent=4, separators=(',', ': '))
 print(json_output)
 
-open("c:\\Users\\kevin\\deadlines.json", "w").write(json_output)
+json_path = "c:\\Users\\kevin\\deadlines.json"
+open(json_path, "w").write(json_output)
+print("saved", count, "events to", json_path)

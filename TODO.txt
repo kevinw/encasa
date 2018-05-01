@@ -1,8 +1,9 @@
-(A) cache-control no-store ? why does checking "change password hint on desktop" sometimes affect GDC cards??
-(A) social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
-(A) rustfest deadline with subgoal deadlines due:2018-04-27
+(B) divide html template into its own module for compilation speed; add a time-took display to cargo watch
+(B) @bug clicking "Game Ideas" link has a %20 in the name, doesn't actually open the correct file.
+(B) social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
+(B) how to do "sub goals" for deadlines, todos, etc?
 (B) 2018-04-23 figure out how to get the server to run always in the background
-(B) show "days until" specific google calendar events
+x (B) show "days until" specific google calendar events
 consider using a CSS framework like https://bulma.io/ for grids, etc.
 how to capture festival submissions for things like http://virtualrealityla.com/
 TO READ folder on desktop--treat some folders as a TODO list in themselves?

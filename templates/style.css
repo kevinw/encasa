@@ -1,0 +1,53 @@
+body {
+  font-family: Arial; /* 'Oswald', sans-serif; */
+}
+h1 {
+  padding-left: 15px;
+}
+.deadlines li { font-size: 16.5px; }
+.unstyled-list {
+  list-style: none;
+}
+.todo-done label {
+    text-decoration: line-through;
+    color: grey;
+}
+.navigable-list li:focus-within {
+  background-color: cyan;
+}
+/* .navigable-list :nth-child(odd) { background: #efefef; } */
+.todo-context, .todo-project {
+  color: grey;
+  text-decoration: none;
+}
+a.todo-context:hover, a.todo-project:hover {
+  text-decoration: underline
+}
+.last-updated {
+  color: grey;
+  font-size: 80%;
+}
+.due-date-outer {
+  font-size: 80%;
+}
+h1 a { text-decoration: none; }
+h1 a:hover { text-decoration: underline; }
+
+.due-date-outer.due-date-today {
+  border-radius: 5px;
+  border: 2px solid red;
+  padding: 0 4px 0 4px;
+}
+.due-date-outer.due-date-past, .local-file-needs-update {
+  background: red;
+  color: white;
+  border-radius: 5px;
+  padding: 0 4px 0 4px;
+}
+.due-date-outer.due-date-today { color: red; }
+.due-date-outer.due-date-future { color: grey; }
+.todo-done .due-date-outer { display: none; }
+
+.priority-label { font-size: 70%; color: grey; }
+.todo-priority-0 { font-size: 150%; }
+.todo-priority-1 { font-size: 120%; }

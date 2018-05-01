@@ -11,9 +11,16 @@ pub struct DateEntry {
 
 impl DateEntry {
     pub fn to_naive_date(&self) -> chrono::format::ParseResult<chrono::NaiveDate> {
-        assert!(self.dateTime.is_empty());
-        assert!(self.timeZone.is_empty());
-        chrono::NaiveDate::parse_from_str(&self.date, "%Y-%m-%d")
+        if self.dateTime.is_empty() {
+            assert!(self.dateTime.is_empty());
+            chrono::NaiveDate::parse_from_str(&self.date, "%Y-%m-%d")
+        } else {
+            assert!(!self.dateTime.is_empty(), "invalid: {:?}", self);
+            // assert!(self.timeZone.is_empty());
+            Ok(
+                chrono::NaiveDateTime::parse_from_str(&self.dateTime, "%+").unwrap().date()
+            )
+        }
     }
 }
 
