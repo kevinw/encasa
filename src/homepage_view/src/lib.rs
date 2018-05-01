@@ -64,7 +64,7 @@ pub mod filters {
         }
 
         let days = d.num_days().abs();
-        let string = String::from(if days > 0 {
+        let string = if days > 0 {
             if days == 1 {
                 match date_when {
                     DateWhen::Future => String::from("tomorrow"),
@@ -87,7 +87,7 @@ pub mod filters {
                     format!("{} second{} {}", seconds, is_plural(seconds), word)
                 }
             }
-        });
+        };
 
         Ok(string)
     }
