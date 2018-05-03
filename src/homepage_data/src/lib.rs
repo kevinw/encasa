@@ -312,8 +312,16 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
 }
 
 fn get_deadlines() -> Result<Deadlines, std::io::Error> {
-    let deadlines:Deadlines = serde_yaml::from_str(&get_file_contents(DEADLINES_JSON_PATH)?).expect(
+    let mut deadlines:Deadlines = serde_yaml::from_str(&get_file_contents(DEADLINES_JSON_PATH)?).expect(
         &format!("Couldn't parse JSON at {}", DEADLINES_JSON_PATH));
+
+    use datetools::DateWhen;
+    deadlines.deadlines.retain(
+        |d| match DateWhen::for_date(&d.start.to_naive_date().unwrap()) {
+            DateWhen::Future => true,
+            DateWhen::Today => true,
+            DateWhen::Past => false,
+        });
     Ok(deadlines)
 }
 

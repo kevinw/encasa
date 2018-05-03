@@ -1,4 +1,4 @@
-(B) @bug clicking "Game Ideas" link has a %20 in the name, doesn't actually open the correct file.
+x (B) @bug clicking "Game Ideas" link has a %20 in the name, doesn't actually open the correct file.
 (B) social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
 (B) how to do "sub goals" for deadlines, todos, etc?
 (B) 2018-04-23 figure out how to get the server to run always in the background
