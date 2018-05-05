@@ -1,12 +1,12 @@
-x (B) @bug clicking "Game Ideas" link has a %20 in the name, doesn't actually open the correct file.
-(B) social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
-(B) how to do "sub goals" for deadlines, todos, etc?
+(B) 2018-05-03 "install" working binaries to ~/bin and then use that in a service that reloads it when it changes?
+(B) 2018-05-03 social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
+(B) 2018-05-03 how to do "sub goals" for deadlines, todos, etc?
 (B) 2018-04-23 figure out how to get the server to run always in the background
-consider using a CSS framework like https://bulma.io/ for grids, etc.
-how to capture festival submissions for things like http://virtualrealityla.com/
-TO READ folder on desktop--treat some folders as a TODO list in themselves?
-brainstorm more random things like quotes
-last git commit as "last modified" date for project directories
-use (something like) https://github.com/borisyankov/react-sparklines for todo files, file sizes
-a button to archive old todos
-some kind of "streak" system, for example keto
+2018-05-03 deadline links could be the first link in the description
+2018-05-03 consider using a CSS framework like https://bulma.io/ for grids, etc.
+2018-05-03 how to capture festival submissions for things like http://virtualrealityla.com/
+2018-05-03 TO READ folder on desktop--treat some folders as a TODO list in themselves?
+2018-05-03 brainstorm more random things like quotes
+2018-05-03 last git commit as "last modified" date for project directories - `git log -1 --format=%cd` would do it
+2018-05-03 use (something like) https://github.com/borisyankov/react-sparklines for todo files, file sizes
+2018-05-03 some kind of "streak" system, for example keto

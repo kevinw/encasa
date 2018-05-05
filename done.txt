@@ -15,3 +15,5 @@ x (A) cache-control no-store ? why does checking "change password hint on deskto
 x (B) divide html template into its own module for compilation speed; add a time-took display to cargo watch
 x (B) show "days until" specific google calendar events
 x event submission deadlines
+x (B) @bug clicking "Game Ideas" link has a %20 in the name, doesn't actually open the correct file.
+x 2018-05-03 a button to archive old todos

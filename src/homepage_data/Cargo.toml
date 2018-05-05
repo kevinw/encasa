@@ -3,6 +3,7 @@ name = "homepage_data"
 version = "0.1.0"
 authors = ["Kevin Watters <kevinwatters@gmail.com>"]
 
+
 [dependencies]
 serde = "*"
 serde_derive = "*"
@@ -15,6 +16,4 @@ lazy_static = { version = "1.0.0" }
 nom = { version = "^3.2" }
 regex = { version = "^0.2" }
 humantime = "*"
-
-
-
+tempfile = "*"

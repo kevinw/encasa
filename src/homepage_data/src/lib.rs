@@ -2,6 +2,7 @@
 
 extern crate time;
 extern crate chrono;
+extern crate tempfile;
 extern crate serde;
 extern crate serde_json;
 extern crate serde_yaml;
@@ -198,34 +199,64 @@ fn parse_todo_file(path: &str) -> Result<Vec<Task>, std::io::Error> {
     Ok(tasks)
 }
 
-pub fn archive_finished_tasks() -> Result<i32, std::io::Error> {
-    Ok(0)
+fn archive_tasks_in_todo_file(path: &str) -> Result<u32, std::io::Error> {
+    let mut lines:Vec<String> = vec![];
+    let mut done_lines:Vec<String> = vec![];
+    for line in get_file_contents(path)?.lines() {
+        match &mut Task::from_str(&line) {
+            Ok(task) if task.finished => {
+                done_lines.push(line.into());
+            }
+            _ => {
+                lines.push(line.into());
+            }
+        }
+    }
+
+    if done_lines.len() > 0 {
+        // append done lines
+        std::fs::OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(get_done_filename(path)
+                  .expect(&format!("couldn't make a done.txt path for {}", path)))?
+            .write_all(&done_lines.join("\n").into_bytes())?;
+
+        // rewrite todo file
+        File::create(&path)?.write_all(&lines.join("\n").into_bytes())?;
+    }
+
+    Ok(done_lines.len() as u32)
+}
+
+pub fn archive_finished_tasks() -> Result<u32, std::io::Error> {
+    let mut count:u32 = 0;
+    for ref local_file in HomepageMeta::from_local_config()?.local.iter().filter(|&f| f.todos) {
+        let path:&str = &shellexpand::tilde(&local_file.path);
+        count += archive_tasks_in_todo_file(path)?;
+    }
+
+    Ok(count)
 }
 
 pub fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Error> {
     let meta = HomepageMeta::from_local_config()?;
     let mut found_any = false;
     let mut new_hash:String = String::new();
-    for local_file in &meta.local {
-        if !local_file.todos {
-            continue;
-        }
 
+    for ref local_file in meta.local.iter().filter(|&f| f.todos) {
         let path:&str = &shellexpand::tilde(&local_file.path);
         let mut lines:Vec<String> = vec![];
         let mut found = false;
         let mut original_contents = get_file_contents(path)?;
-        for (num, line_res) in original_contents.lines().enumerate() {
-            let line = line_res;
+        for (num, line) in original_contents.lines().enumerate() {
             match &mut Task::from_str(&line) {
                 Ok(task) => {
                     if task.calc_hash() == hash {
                         task.finished = finished;
                         found = true;
                         new_hash.push_str(&task.calc_hash());
-                        let new_task_string = format!("{}", task);
-                        println!("new line at {} of {}:\n{}", num, path, new_task_string);
-                        lines.push(new_task_string);
+                        lines.push(format!("{}", task));
                         continue;
                     }
                 },
@@ -341,7 +372,7 @@ pub fn update_data() -> Result<CachedData, ::std::io::Error> {
         let history = update_file_history(&path)?;
         if local_file.todos {
             let todos = parse_todo_file(&path)?;
-            todos_count += todos.iter().filter(|c| !c.finished).count();
+            todos_count += todos.iter().filter(|c| !c.finished && c.priority == 0).count();
             //println!("{} total todos in {}", todos.len(), path);
             for todo in &todos {
                 all_todos.push(TaskWithContext {
@@ -405,10 +436,82 @@ impl TaskWithContext {
     }
 }
 
+pub fn get_done_filename(todo_filename: &str) -> Option<String> {
+    if !todo_filename.to_lowercase().ends_with("todo.txt") {
+        return None;
+    }
+    if todo_filename.len() > 8 {
+        let prev = todo_filename.chars().nth(todo_filename.len() - 9).unwrap();
+        // TODO: use actual path splitting here
+        if !(prev == '.' || prev == '\\' || prev == '/') {
+            return None;
+        }
+    }
+    Some({
+        let mut replacement = String::with_capacity(todo_filename.len());
+        replacement.push_str(&todo_filename[0..todo_filename.len() - 8]);
+        replacement.push_str("done.txt");
+        replacement
+    })
+}
+
 #[cfg(test)]
 mod tests {
+    use super::*;
     #[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);
+    }
+
+    #[test]
+    fn test_done_file_names() {
+        let checks = vec![
+            ("C:\\Users\\Kevin\\Dropbox\\watch.todo.txt", "C:\\Users\\Kevin\\Dropbox\\watch.done.txt"),
+            ("C:\\Users\\Kevin\\Dropbox\\TODO.txt", "C:\\Users\\Kevin\\Dropbox\\done.txt"),
+            ("TODO.txt", "done.txt"),
+            ("foo/bar/meep.TODO.txt", "foo/bar/meep.done.txt")
+        ];
+
+        for (ref inp, ref out) in checks {
+            let done_filename = get_done_filename(*inp).expect(&format!(
+                "couldn't make a done.txt filename from {}", inp));
+            assert_eq!(done_filename, *out);
+        }
+
+        let not_todos = vec![
+            "TODOO.txt",
+            "not.todo.abc.txt",
+            "foo-todo.txt",
+        ];
+
+        for ref inp in not_todos {
+            if let Some(_) = get_done_filename(&inp) {
+                panic!("expected to fail: {}", inp);
+            }
+        }
+    }
+
+    #[test]
+    fn test_archive_todos() {
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("my.todo.txt");
+        let path_as_str = file_path.clone().into_os_string().into_string().unwrap();
+        let mut file = File::create(file_path).unwrap();
+        writeln!(file, "2015-04-01 +project thing that's not done
+x a thing that is done
+x another thing that is done
+a todo
+x 2015-05-01 a third thing that is done
+").unwrap();
+        let count = archive_tasks_in_todo_file(&path_as_str).expect("error while archiving");
+        assert_eq!(count, 3, "expected 3 archived done todos");
+
+        let archived = parse_todo_file(&get_done_filename(&path_as_str).unwrap()).unwrap();
+        assert_eq!(archived.len(), 3, "expected 3 archived done todos in the done.txt file");
+        assert_eq!(archived[2].subject, "a third thing that is done");
+
+        let todos = parse_todo_file(&path_as_str).unwrap();
+        assert_eq!(todos.len(), 2, "expected 2 remaining todos");
+        assert_eq!(todos[1].subject, "a todo");
     }
 }

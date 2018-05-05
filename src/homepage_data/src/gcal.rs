@@ -34,21 +34,12 @@ pub struct Event {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    //use super::*;
     //use serde_json;
     use time;
 
     #[test]
     fn parse_gcal_datetime() {
-        /*
-        let json = r#"{"date": "2018-05-04"}"#;
-        let entry:DateEntry = serde_json::from_str(&json).unwrap();
-
-        let dt = entry.to_chrono_datetime().expect("problem parsing date");
-        let local_dt = Local.ymd(2018, 5, 4).and_hms(12, 0, 0);
-
-        assert_eq!(dt, local_dt);
-        */
         {
             let t = time::strptime("2018-04-18", "%F").unwrap();
             println!("t: {:?}", t);
@@ -65,6 +56,7 @@ mod tests {
         };
     }
 
+        /*
     use ::chrono;
 
     #[test]
@@ -86,4 +78,5 @@ mod tests {
 
     }
 
+        */
 }

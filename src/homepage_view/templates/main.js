@@ -16,7 +16,7 @@ function postJSON(url, data, cb) {
   }
   var xhr = new XMLHttpRequest();
   xhr.addEventListener("load", reqListener);
-  xhr.open("POST", "/todos");
+  xhr.open("POST", url);
 
   xhr.setRequestHeader('Content-Type', 'application/json');
 
@@ -34,6 +34,7 @@ function postJSON(url, data, cb) {
         cb(res);
       }
     } else {
+      console.error(this);
       console.error(this.responseText);
       alert(this.responseText);
     }

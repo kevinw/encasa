@@ -39,7 +39,7 @@ impl QueryStringExtractor {
 
 #[derive(Deserialize, Serialize)]
 pub struct ArchiveFinishedResponse {
-    pub num_archived: i32,
+    pub num_archived: u32,
 }
 
 
@@ -67,6 +67,7 @@ pub fn router() -> Router {
 fn archive_finished(state: State) -> Box<HandlerFuture> {
     match archive_finished_tasks() {
         Ok(num_archived) => {
+            // TODO: so much boilerplate to return json!
             let serialized = serde_json::to_string_pretty(
                 &ArchiveFinishedResponse { num_archived }).unwrap();
             let resp = create_response(&state, StatusCode::Ok,
