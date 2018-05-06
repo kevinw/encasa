@@ -27,8 +27,8 @@ use std::path::{Path};
 use std::io::{Read, Write, BufReader, BufRead};
 use std::time::SystemTime;
 
-static META_YAML_PATH: &str = "~\\homepage.yaml";
-static DEADLINES_JSON_PATH: &str = "~\\deadlines.json";
+static META_YAML_PATH: &str = "~/homepage.yaml";
+static DEADLINES_JSON_PATH: &str = "~/deadlines.json";
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FileState
@@ -44,8 +44,9 @@ struct HomepageMeta {
 
 impl HomepageMeta {
     pub fn from_local_config() -> Result<HomepageMeta, std::io::Error> {
-        Ok(serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
-            .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH)))
+        let path = shellexpand::tilde(META_YAML_PATH);
+        Ok(serde_yaml::from_str(&get_file_contents(&path)?)
+            .expect(&format!("Couldn't parse YAML at {}", path)))
     }
 }
 
@@ -345,7 +346,8 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
 }
 
 fn get_deadlines() -> Result<Deadlines, std::io::Error> {
-    let mut deadlines:Deadlines = serde_yaml::from_str(&get_file_contents(DEADLINES_JSON_PATH)?).expect(
+    let deadlines_path = shellexpand::tilde(DEADLINES_JSON_PATH);
+    let mut deadlines:Deadlines = serde_yaml::from_str(&get_file_contents(&deadlines_path)?).expect(
         &format!("Couldn't parse JSON at {}", DEADLINES_JSON_PATH));
 
     use datetools::DateWhen;
@@ -369,7 +371,6 @@ pub fn update_data() -> Result<CachedData, ::std::io::Error> {
         if local_file.todos {
             let todos = parse_todo_file(&path)?;
             todos_count += todos.iter().filter(|c| !c.finished && c.priority == 0).count();
-            //println!("{} total todos in {}", todos.len(), path);
             for todo in &todos {
                 all_todos.push(TaskWithContext {
                     task: todo.clone(),
@@ -379,11 +380,9 @@ pub fn update_data() -> Result<CachedData, ::std::io::Error> {
         }
 
         let update_state = if local_file.frequency_goal_seconds > 0 {
-            //println!("frequency goal for {}: {}", path, local_file.frequency_goal_seconds);
             assert!(!history.states.is_empty());
             {
                 let last_state = &history.states[history.states.len() - 1];
-                //println!("last mod time {:?} for {}", last_state.modification_time, path);
                 let diff = SystemTime::now().duration_since(last_state.modification_time).unwrap();
                 let seconds = time::Duration::from_std(diff).unwrap().num_seconds();
                 if seconds > local_file.frequency_goal_seconds {
