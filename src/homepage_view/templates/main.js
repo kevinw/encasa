@@ -46,6 +46,7 @@ function postJSON(url, data, cb) {
 function archiveFinishedTasks() {
   postJSON("/actions/archive_finished", {}, function(res) {
     console.log(res);
+    location.reload(); // maybe we can have the response show which hashes went away?
   });
 }
 

@@ -22,13 +22,13 @@ pub use chrono::NaiveDate as Date;
 use todo::Task;
 use std::str::FromStr;
 use std::fs;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::path::{Path};
 use std::io::{Read, Write, BufReader, BufRead};
 use std::time::SystemTime;
 
-static META_YAML_PATH: &str = "c:\\Users\\kevin\\homepage.yaml";
-static DEADLINES_JSON_PATH: &str = "c:\\Users\\kevin\\deadlines.json";
+static META_YAML_PATH: &str = "~\\homepage.yaml";
+static DEADLINES_JSON_PATH: &str = "~\\deadlines.json";
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FileState
@@ -213,14 +213,16 @@ fn archive_tasks_in_todo_file(path: &str) -> Result<u32, std::io::Error> {
         }
     }
 
-    if done_lines.len() > 0 {
+    if !done_lines.is_empty() {
         // append done lines
-        std::fs::OpenOptions::new()
+        let mut f = OpenOptions::new()
             .append(true)
             .create(true)
             .open(get_done_filename(path)
-                  .expect(&format!("couldn't make a done.txt path for {}", path)))?
-            .write_all(&done_lines.join("\n").into_bytes())?;
+                  .expect(&format!("couldn't make a done.txt path for {}", path)))?;
+
+        f.write_all(&String::from("\n").into_bytes())?;
+        f.write_all(&done_lines.join("\n").into_bytes())?;
 
         // rewrite todo file
         File::create(&path)?.write_all(&lines.join("\n").into_bytes())?;
@@ -359,15 +361,9 @@ fn get_deadlines() -> Result<Deadlines, std::io::Error> {
 pub fn update_data() -> Result<CachedData, ::std::io::Error> {
     let mut todos_count:usize = 0;
     let mut all_todos:Vec<TaskWithContext> = vec![];
-
-    let deadlines = get_deadlines()?;
-
-    let meta: HomepageMeta = serde_yaml::from_str(&get_file_contents(META_YAML_PATH)?)
-        .expect(&format!("Couldn't parse YAML at {}", META_YAML_PATH));
-
     let mut files:Vec<LocalFileDescWithState> = vec![];
 
-    for local_file in &meta.local {
+    for local_file in &HomepageMeta::from_local_config()?.local {
         let path = local_file.expanded_path();
         let history = update_file_history(&path)?;
         if local_file.todos {
@@ -412,7 +408,7 @@ pub fn update_data() -> Result<CachedData, ::std::io::Error> {
         todos_count,
         todos: all_todos,
         local_files: files,
-        deadlines,
+        deadlines: get_deadlines()?,
     })
 }
 

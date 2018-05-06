@@ -8,7 +8,7 @@ I'm a big fan of the [Todo.txt](http://todotxt.org/) format--there are great vim
 
 ## Setup
 
-Put a file called homepage.yaml in your $HOME directory:
+Put a file called `homepage.yaml` in your $HOME directory:
 
 ```yaml
 local:
@@ -31,6 +31,16 @@ local:
     name: journal
     frequency_goal_seconds: 2days
 ```
+
+## Keyboard shortcuts
+
+ * j - move down one task
+ * k - move up one task
+ * x - toggle task finished or unfinished
+ * enter - follow first link in task
+ * \D - archive finished tasks into done.txt files next to their respective todo.txt files
+ * gg - go to the first task
+ * G - go to the last task
 
 ## Rust libraries used
 

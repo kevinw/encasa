@@ -17,3 +17,4 @@ x (B) show "days until" specific google calendar events
 x event submission deadlines
 x (B) @bug clicking "Game Ideas" link has a %20 in the name, doesn't actually open the correct file.
 x 2018-05-03 a button to archive old todos
+x 2018-05-03 how to capture festival submissions for things like http://virtualrealityla.com/

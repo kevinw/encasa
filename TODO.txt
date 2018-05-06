@@ -4,9 +4,7 @@
 (B) 2018-04-23 figure out how to get the server to run always in the background
 2018-05-03 deadline links could be the first link in the description
 2018-05-03 consider using a CSS framework like https://bulma.io/ for grids, etc.
-2018-05-03 how to capture festival submissions for things like http://virtualrealityla.com/
 2018-05-03 TO READ folder on desktop--treat some folders as a TODO list in themselves?
-2018-05-03 brainstorm more random things like quotes
 2018-05-03 last git commit as "last modified" date for project directories - `git log -1 --format=%cd` would do it
 2018-05-03 use (something like) https://github.com/borisyankov/react-sparklines for todo files, file sizes
 2018-05-03 some kind of "streak" system, for example keto
