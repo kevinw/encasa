@@ -2,3 +2,4 @@ target/
 **/*.rs.bk
 extension.pem
 extension.crx
+*.meta.yaml

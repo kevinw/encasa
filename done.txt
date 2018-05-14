@@ -20,3 +20,4 @@ x 2018-05-03 a button to archive old todos
 x 2018-05-03 how to capture festival submissions for things like http://virtualrealityla.com/
 
 x test
+x (A) 2018-05-07 setup travis for unit tests https://github.com/rnleach/sonde/blob/master/.travis.yml
