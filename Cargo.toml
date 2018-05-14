@@ -3,6 +3,8 @@ name = "homepage"
 version = "0.1.0"
 authors = ["Kevin Watters <kevinwatters@gmail.com>"]
 
+[workspace]
+
 [dependencies]
 homepage_data = { path = "./src/homepage_data" }
 homepage_view = { path = "./src/homepage_view" }

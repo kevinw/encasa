@@ -1,3 +1,5 @@
+(A) 2018-05-07 setup travis for unit tests https://github.com/rnleach/sonde/blob/master/.travis.yml
+(B) 2018-05-07 show all todos sorted by oldest->newest
 (B) 2018-05-03 "install" working binaries to ~/bin and then use that in a service that reloads it when it changes?
 (B) 2018-05-03 social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
 (B) 2018-05-03 how to do "sub goals" for deadlines, todos, etc?
