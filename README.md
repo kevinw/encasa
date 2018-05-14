@@ -1,6 +1,8 @@
 # encasa
 
-## a personal new tab page for getting s\*\*t done
+**An opinionated personal new tab page for tracking todo.txts and events**
+
+![build status](https://travis-ci.org/kevinw/encasa.svg?branch=master)
 
 I'm a big fan of the [Todo.txt](http://todotxt.org/) format--there are great vim plugins to edit Todo.txt files, as well as iOS apps for updating Todo.txt files on Dropbox. The only missing piece was a way to see all my various projects' TODO files in one place.
 
