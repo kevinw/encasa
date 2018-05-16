@@ -36,6 +36,8 @@ local:
 
 ## Keyboard shortcuts
 
+These shortcuts are vim inspired.
+
  * j - move down one task
  * k - move up one task
  * x - toggle task finished or unfinished
