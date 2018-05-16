@@ -46,9 +46,7 @@ local:
 
 ## Rust libraries used
 
-* [Gotham](https://gotham.rs/) for the web api
+* [actix-web](http://actix.rs/) for the web api
 * [askama](https://github.com/djc/askama) for type-safe simple HTML templating
 * [humantime](https://github.com/tailhook/humantime) for parsing human readable times
 * and of course, [serde](https://serde.rs/) for serializing
-
-

@@ -8,6 +8,7 @@ extern crate serde_json;
 extern crate serde_yaml;
 extern crate shellexpand;
 extern crate humantime;
+#[macro_use] extern crate failure;
 
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate nom;
@@ -27,6 +28,8 @@ use std::path::{Path};
 use std::io::{Read, Write, BufReader, BufRead};
 use std::time::SystemTime;
 
+use failure::{ResultExt};
+
 static META_YAML_PATH: &str = "~/homepage.yaml";
 static DEADLINES_JSON_PATH: &str = "~/deadlines.json";
 
@@ -43,7 +46,7 @@ struct HomepageMeta {
 }
 
 impl HomepageMeta {
-    pub fn from_local_config() -> Result<HomepageMeta, std::io::Error> {
+    pub fn from_local_config() -> Result<HomepageMeta, failure::Error> {
         let path = shellexpand::tilde(META_YAML_PATH);
         Ok(serde_yaml::from_str(&get_file_contents(&path)?)
             .expect(&format!("Couldn't parse YAML at {}", path)))
@@ -152,6 +155,12 @@ pub struct Deadlines {
     pub deadlines: Vec<gcal::Event>,
 }
 
+impl Deadlines {
+    pub fn new() -> Deadlines {
+        Deadlines { deadlines: vec![] }
+    }
+}
+
 impl FileState {
     fn from(metadata: &std::fs::Metadata) -> FileState {
         FileState {
@@ -161,13 +170,12 @@ impl FileState {
     }
 }
 
-fn _ensure_dir_exists(path_to_dir: &str) -> Result<(), std::io::Error>
+fn _ensure_dir_exists(path_to_dir: &str) -> Result<(), failure::Error>
 {
     if Path::new(path_to_dir).exists() {
         let metadata = fs::metadata(path_to_dir)?;
         if !metadata.is_dir() {
-            let message = format!("{} is not a directory", path_to_dir);
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, message));
+            return Err(format_err!("{} is not a directory", path_to_dir));
         }
     } else {
         fs::create_dir(path_to_dir)?;
@@ -176,15 +184,17 @@ fn _ensure_dir_exists(path_to_dir: &str) -> Result<(), std::io::Error>
     Ok(())
 }
 
-fn get_file_contents(path: &str) -> Result<String, std::io::Error> {
+fn get_file_contents(path: &str) -> Result<String, failure::Error> {
     let mut contents = String::new();
-    BufReader::new(File::open(path)?).read_to_string(&mut contents)?;
+    let f = File::open(path).context(format!("missing file '{}'", path))?;
+    BufReader::new(f).read_to_string(&mut contents)?;
     Ok(contents)
 }
 
-fn parse_todo_file(path: &str) -> Result<Vec<Task>, std::io::Error> {
+fn parse_todo_file(path: &str) -> Result<Vec<Task>, failure::Error> {
     let mut tasks:Vec<Task> = vec!();
-    for (num, line) in BufReader::new(File::open(path)?).lines().enumerate() {
+    let f = File::open(path).context(format!("missing todo file {}", path))?;
+    for (num, line) in BufReader::new(f).lines().enumerate() {
         match Task::from_str(&line?) {
             Ok(task) => {
                 if !task.subject.is_empty() {
@@ -200,7 +210,7 @@ fn parse_todo_file(path: &str) -> Result<Vec<Task>, std::io::Error> {
     Ok(tasks)
 }
 
-fn archive_tasks_in_todo_file(path: &str) -> Result<u32, std::io::Error> {
+fn archive_tasks_in_todo_file(path: &str) -> Result<u32, failure::Error> {
     let mut lines:Vec<String> = vec![];
     let mut done_lines:Vec<String> = vec![];
     for line in get_file_contents(path)?.lines() {
@@ -232,7 +242,7 @@ fn archive_tasks_in_todo_file(path: &str) -> Result<u32, std::io::Error> {
     Ok(done_lines.len() as u32)
 }
 
-pub fn archive_finished_tasks() -> Result<u32, std::io::Error> {
+pub fn archive_finished_tasks() -> Result<u32, failure::Error> {
     let mut count:u32 = 0;
     for ref local_file in HomepageMeta::from_local_config()?.local.iter().filter(|&f| f.todos) {
         let path:&str = &shellexpand::tilde(&local_file.path);
@@ -242,7 +252,7 @@ pub fn archive_finished_tasks() -> Result<u32, std::io::Error> {
     Ok(count)
 }
 
-pub fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io::Error> {
+pub fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, failure::Error> {
     let meta = HomepageMeta::from_local_config()?;
     let mut found_any = false;
     let mut new_hash:String = String::new();
@@ -279,7 +289,8 @@ pub fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io
                 original_contents.hash(&mut hasher);
                 let mut backup_path = shellexpand::tilde("~/.homepage/backups/").to_string();
                 backup_path.push_str(&hasher.finish().to_string());
-                File::create(&backup_path)?.write_all(&original_contents.into_bytes())?;
+                let mut f = File::create(&backup_path).context(format!("could not create backup path {}", backup_path))?;
+                f.write_all(&original_contents.into_bytes())?;
             }
 
             File::create(&path)
@@ -293,11 +304,11 @@ pub fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, std::io
     if found_any {
         Ok(new_hash)
     } else {
-        Err(std::io::Error::new(std::io::ErrorKind::Other, format!("no todo for hash {}", hash)))
+        Err(format_err!("no todo for hash {}", hash))
     }
 }
 
-fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
+fn update_file_history(path: &str) -> Result<FileStateCache, failure::Error> {
     // Create empty YAML file if it's not there.
     let meta_path_str: String;
     {
@@ -345,8 +356,13 @@ fn update_file_history(path: &str) -> Result<FileStateCache, ::std::io::Error> {
     Ok(history)
 }
 
-fn get_deadlines() -> Result<Deadlines, std::io::Error> {
-    let deadlines_path = shellexpand::tilde(DEADLINES_JSON_PATH);
+fn get_deadlines() -> Result<Deadlines, failure::Error> {
+    let deadlines_path = String::from(shellexpand::tilde(DEADLINES_JSON_PATH));
+
+    if !Path::new(&deadlines_path).exists() {
+        return Ok(Deadlines::new())
+    }
+
     let mut deadlines:Deadlines = serde_yaml::from_str(&get_file_contents(&deadlines_path)?).expect(
         &format!("Couldn't parse JSON at {}", DEADLINES_JSON_PATH));
 
@@ -360,7 +376,7 @@ fn get_deadlines() -> Result<Deadlines, std::io::Error> {
     Ok(deadlines)
 }
 
-pub fn update_data() -> Result<CachedData, ::std::io::Error> {
+pub fn update_data() -> Result<CachedData, failure::Error> {
     let mut todos_count:usize = 0;
     let mut all_todos:Vec<TaskWithContext> = vec![];
     let mut files:Vec<LocalFileDescWithState> = vec![];

@@ -17,3 +17,4 @@ nom = { version = "^3.2" }
 regex = { version = "^0.2" }
 humantime = "*"
 tempfile = "*"
+failure = "*"
