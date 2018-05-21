@@ -36,6 +36,8 @@ local:
 
 ## Keyboard shortcuts
 
+These shortcuts are vim inspired.
+
  * j - move down one task
  * k - move up one task
  * x - toggle task finished or unfinished
@@ -46,9 +48,7 @@ local:
 
 ## Rust libraries used
 
-* [Gotham](https://gotham.rs/) for the web api
+* [actix-web](http://actix.rs/) for the web api
 * [askama](https://github.com/djc/askama) for type-safe simple HTML templating
 * [humantime](https://github.com/tailhook/humantime) for parsing human readable times
 * and of course, [serde](https://serde.rs/) for serializing
-
-

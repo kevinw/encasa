@@ -1,6 +1,6 @@
 [package]
-name = "homepage"
-version = "0.1.0"
+name = "encasa"
+version = "0.1.1"
 authors = ["Kevin Watters <kevinwatters@gmail.com>"]
 
 [workspace]
@@ -10,10 +10,6 @@ homepage_data = { path = "./src/homepage_data" }
 homepage_view = { path = "./src/homepage_view" }
 
 time = "*"
-gotham = "*"
-gotham_derive = "*"
-
-hyper = "0.11"
 futures = "0.1"
 mime = "0.3"
 
@@ -29,3 +25,8 @@ shellexpand = "*"
 regex = { version = "^0.2" }
 
 clap = "*"
+
+failure = "*"
+actix-web = "*"
+actix = "*"
+env_logger = "*"

@@ -1,13 +1,13 @@
-#[macro_use] extern crate serde_derive;
-#[macro_use] extern crate hyper;
-
+extern crate env_logger;
 extern crate time;
 extern crate futures;
-extern crate gotham;
-#[macro_use] extern crate gotham_derive;
 extern crate mime;
 extern crate serde;
 extern crate serde_json;
+#[macro_use] extern crate serde_derive;
+extern crate failure;
+extern crate actix_web;
+extern crate actix;
 
 extern crate clap;
 
@@ -35,7 +35,8 @@ pub fn main() {
     let port_str = matches.value_of("port").unwrap_or("7878");
     println!("Value for config: {}", port_str);
 
-    let addr = format!("127.0.0.1:{}", port_str);
-    println!("Listening for requests at http://{}", addr);
-    gotham::start(addr, routes::router());
+    routes::run_server(port_str);
 }
+
+
+
