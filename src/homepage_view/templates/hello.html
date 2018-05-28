@@ -9,7 +9,15 @@
   </style>
 </head>
 <body>
-  <h1><a href="/">TODO <span id="total_todos_count">({{ todos_count }})</span></a></h1>
+  <h1>
+      <a href="/">TODO <span id="total_todos_count">({{ todos_count }})</span></a>
+  </h1>
+
+  <div class="nav">
+      <ul>  
+          <li><a href="/?sort=date_created">stale</a></li>
+      </ul>
+  </div>
 
   <ul class="deadlines unstyled-list navigable-list">
   {% for deadline in deadlines.deadlines %}

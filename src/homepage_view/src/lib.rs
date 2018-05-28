@@ -141,6 +141,7 @@ pub struct SearchParams {
     pub context: String,
     pub project: String,
     pub search: String,
+    pub sort_by: String,
 }
 
 
@@ -165,6 +166,14 @@ pub fn render(
         }
         if !query_params.search.is_empty() {
             todos_sorted.retain(|t| t.task.subject.contains(&query_params.search));
+        }
+        if !query_params.sort_by.is_empty() {
+            match query_params.sort_by.as_ref() {
+                "create_date" => {
+                    todos_sorted.sort_unstable_by_key(|t| t.task.create_date);
+                }
+                _ => panic!("invalid sort_by {}", query_params.sort_by)
+            }
         }
     }
 

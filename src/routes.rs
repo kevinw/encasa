@@ -50,6 +50,7 @@ pub struct IndexQuery {
     #[serde(default)] pub context: String,
     #[serde(default)] pub project: String,
     #[serde(default)] pub search: String,
+    #[serde(default)] pub sort_by: String,
 }
 
 impl IndexQuery {
@@ -58,6 +59,7 @@ impl IndexQuery {
             context: self.context.clone(),
             project: self.project.clone(),
             search: self.search.clone(),
+            sort_by: self.sort_by.clone(),
         }
     }
 }
