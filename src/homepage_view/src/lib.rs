@@ -6,6 +6,7 @@ extern crate homepage_data;
 extern crate regex;
 extern crate linkify;
 extern crate time;
+extern crate failure;
 
 use homepage_data::{CachedData, LocalFileDescWithState, Deadlines, TaskWithContext};
 use homepage_data::todo::Task;
@@ -150,7 +151,7 @@ pub fn render(
     json_dump: &str,
     query_params: &SearchParams,
     
-    ) -> String {
+    ) -> Result<String, failure::Error> {
 
     let mut todos_sorted = cached_data.todos.clone();
 
@@ -172,7 +173,9 @@ pub fn render(
                 "create_date" => {
                     todos_sorted.sort_unstable_by_key(|t| t.task.create_date);
                 }
-                _ => panic!("invalid sort_by {}", query_params.sort_by)
+                _ => {
+                    return Err(failure::err_msg(format!("invalid sort_by key: '{}'", query_params.sort_by)));
+                }
             }
         }
     }
@@ -185,7 +188,7 @@ pub fn render(
         deadlines: &cached_data.deadlines,
     };
 
-    hello.render().unwrap()
+    Ok(hello.render().unwrap())
 }
 
 #[cfg(test)]

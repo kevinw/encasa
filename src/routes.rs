@@ -11,7 +11,7 @@ use std;
 fn index(query: Query<IndexQuery>) -> Result<HttpResponse, failure::Error> {
     let cached_data = update_data()?;
     let serialized = serde_json::to_string_pretty(&cached_data).unwrap();
-    let html = homepage_view::render(&cached_data, &serialized, &query.to_search_params());
+    let html = homepage_view::render(&cached_data, &serialized, &query.to_search_params())?;
     Ok(HttpResponse::Ok().content_type("text/html").body(html))
 }
 

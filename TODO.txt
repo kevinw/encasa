@@ -1,9 +1,10 @@
 (B) 2018-05-18 make editlocal:// links work on mac
+(B) 2018-05-28 operations like \d when the server isn't running fail.
 x (B) 2018-05-07 show all todos sorted by oldest->newest
 (B) 2018-05-03 "install" working binaries to ~/bin and then use that in a service that reloads it when it changes?
 (B) 2018-05-03 social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
 (B) 2018-05-03 how to do "sub goals" for deadlines, todos, etc?
-(B) 2018-04-23 figure out how to get the server to run always in the background
+(B) 2018-04-23 figure out how to get the server to run always in the background on windows
 2018-05-03 deadline links could be the first link in the description
 2018-05-03 consider using a CSS framework like https://bulma.io/ for grids, etc.
 2018-05-03 TO READ folder on desktop--treat some folders as a TODO list in themselves?

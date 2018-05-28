@@ -17,3 +17,4 @@ regex = { version = "^0.2" }
 linkify = "*"
 time = "*"
 lazy_static = { version = "1.0.0" }
+failure = "*"
