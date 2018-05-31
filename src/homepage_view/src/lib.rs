@@ -15,6 +15,10 @@ use homepage_data::datetools;
 
 use askama::Template;
 
+pub struct RenderOpts {
+    show_priority_text_label: bool,
+}
+
 pub mod filters {
     use regex::Regex;
     use ::{askama, std, linkify};
@@ -116,11 +120,11 @@ pub mod filters {
 #[derive(Template)]
 #[template(path = "hello.html")]
 struct HelloTemplate<'a> {
-    json_dump: &'a str,
     todos_count: usize,
     local_files: &'a Vec<LocalFileDescWithState>,
     todos: &'a Vec<TaskWithContext>,
     deadlines: &'a Deadlines,
+    render_opts: &'a RenderOpts,
 }
 
 fn due_date_sort(a: &Task) -> i32 {
@@ -148,7 +152,6 @@ pub struct SearchParams {
 
 pub fn render(
     cached_data: &CachedData,
-    json_dump: &str,
     query_params: &SearchParams,
     
     ) -> Result<String, failure::Error> {
@@ -181,11 +184,11 @@ pub fn render(
     }
 
     let hello = HelloTemplate {
-        json_dump,
         todos_count: cached_data.todos_count,
         local_files: &cached_data.local_files,
         todos: &todos_sorted,
         deadlines: &cached_data.deadlines,
+        render_opts: &RenderOpts { show_priority_text_label: false },
     };
 
     Ok(hello.render().unwrap())

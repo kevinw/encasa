@@ -115,7 +115,8 @@ function onKeyPress(event) {
       case "x":
         var elem = getFocusedElement();
         if (elem.nodeName == "INPUT") {
-          elem.checked = !elem.checked;
+          //elem.checked = !elem.checked;
+            elem.click();
           return false;
         }
         break;
@@ -151,6 +152,7 @@ document.addEventListener("DOMContentLoaded", function() {
     } else {
       e.target.parentElement.classList.remove("todo-done");
     }
+    clickTodo(e);
   }, false);
 
   window.addEventListener("beforeunload", function (e) {

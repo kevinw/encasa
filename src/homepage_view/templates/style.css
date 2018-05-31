@@ -12,6 +12,14 @@ h1 {
     text-decoration: line-through;
     color: grey;
 }
+.special-emoji {
+    font-size: 200px;
+    position: absolute;
+    z-index: -1;
+    left: -30px;
+    top: -60px;
+    filter: blur(2.5px) grayscale(85%) contrast(150%) invert(75%);
+}
 .nav ul { list-style-type: none; }
 .navigable-list li:focus-within {
   background-color: cyan;

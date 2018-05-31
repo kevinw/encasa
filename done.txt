@@ -21,3 +21,6 @@ x 2018-05-03 how to capture festival submissions for things like http://virtualr
 
 x test
 x (A) 2018-05-07 setup travis for unit tests https://github.com/rnleach/sonde/blob/master/.travis.yml
+x (B) 2018-05-07 show all todos sorted by oldest->newest
+x (B) 2018-05-03 how to do "sub goals" for deadlines, todos, etc?
+x 2018-05-03 consider using a CSS framework like https://bulma.io/ for grids, etc.
