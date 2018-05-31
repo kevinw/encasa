@@ -8,7 +8,6 @@ extern crate serde_json;
 extern crate failure;
 extern crate actix_web;
 extern crate actix;
-
 extern crate clap;
 
 extern crate homepage_data;

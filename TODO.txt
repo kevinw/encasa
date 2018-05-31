@@ -1,3 +1,9 @@
+is there a way to find crates you aren't using?
+freeze versions in Cargo.toml
+make <!-- for="todo-{{- loop.index0 }}"> --> in hello.html a template comment
+don't filter todos in update_data
+rename the update_date function
+rename the hide_in_index field of the LocalFileDesc struct
 (B) 2018-05-18 make editlocal:// links work on mac
 (B) 2018-05-28 operations like \d when the server isn't running fail.
 (B) 2018-05-03 "install" working binaries to ~/bin and then use that in a service that reloads it when it changes?

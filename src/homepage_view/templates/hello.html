@@ -32,7 +32,6 @@
               <li><a href="/?sort_by=create_date">stale</a></li>
           </ul>
       </div>
-
     </div>
 </section>
 
@@ -45,7 +44,6 @@
   {% endfor %}
   </ul>
 
-
 <section class="section">
 <div class="container">
 
@@ -55,6 +53,13 @@
                   <ul class="unstyled-list navigable-list">
                   {% for local_file in local_files %}
                     <li{% if local_file.needs_update() %} class="needs-update"{% endif %}>
+                        {% if local_file.file_is_showing_todos %}
+                            <span style="padding-left: 3px;">✔︎</span>
+                        {% else if local_file.desc.todos %}
+                            <a href="/?file={{ local_file.desc.name }}">☐</a>
+                        {% else %}
+                        <span style="opacity: 0;">☐</span>
+                        {% endif %}
                       <a class="navigable-elem" href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.readable_name() }}</a>
                       <span class="last-updated{% if local_file.needs_update() %} local-file-needs-update{% endif %}">
                         ✎ {{ local_file.duration_since_modified()|humanize_duration }}

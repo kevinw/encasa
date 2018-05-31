@@ -8,7 +8,11 @@ use std;
 use homepage_data::{update_data, mark_todo_completed, archive_finished_tasks};
 
 fn index(query: Query<IndexQuery>) -> Result<HttpResponse, failure::Error> {
-    let cached_data = update_data()?;
+    let mut files_to_include = vec![];
+    if !query.file.is_empty() {
+        files_to_include.push(query.file.clone());
+    }
+    let cached_data = update_data(&files_to_include)?;
     let html = homepage_view::render(&cached_data, &query.to_search_params())?;
     Ok(HttpResponse::Ok().content_type("text/html").body(html))
 }
@@ -49,6 +53,7 @@ pub struct IndexQuery {
     #[serde(default)] pub project: String,
     #[serde(default)] pub search: String,
     #[serde(default)] pub sort_by: String,
+    #[serde(default)] pub file: String,
 }
 
 impl IndexQuery {

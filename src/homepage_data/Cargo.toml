@@ -3,7 +3,6 @@ name = "homepage_data"
 version = "0.1.0"
 authors = ["Kevin Watters <kevinwatters@gmail.com>"]
 
-
 [dependencies]
 serde = "*"
 serde_derive = "*"
