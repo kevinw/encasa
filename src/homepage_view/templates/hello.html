@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" /> 
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TODO ({{ todos_count }})</title>
+  <title>TODO {% if todos_count > 0 %}({{ todos_count }}){% endif %}</title>
   <base target="_parent">
   <style>
     {% include "bulma.min.css" %}
@@ -11,8 +11,6 @@
   </style>
 </head>
 <body>
-
-<span class="special-emoji">🏡</span>
 
 <section class="section">
     <div class="level">
@@ -74,8 +72,8 @@
                   <ul id="todo_list" class="unstyled-list navigable-list">
                   {% for todo in todos %}
                       <li class="todo-priority-{{ todo.task.priority }}{% if todo.task.finished %} todo-done{% endif %}">
-                      <input class="navigable-elem" type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.task.calc_hash() }}"{% if todo.task.finished %} checked{% endif %}>
-                      <label> <!-- for="todo-{{- loop.index0 }}"> -->
+                          <input class="navigable-elem" type="checkbox" name="todo-{{-  todo.task.calc_hash() }}" value="{{ todo.task.calc_hash() }}"{% if todo.task.finished %} checked{% endif %}>
+                      <label>
                         {% if render_opts.show_priority_text_label %}
                             <span class="priority-label">{{ todo.task.priority_label() }}</span>
                         {% endif %}

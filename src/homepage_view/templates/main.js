@@ -1,20 +1,20 @@
 "use strict";
 
 function removeElement(array, elem) {
-  var index = array.indexOf(elem);
+  const index = array.indexOf(elem);
   if (index > -1) {
     array.splice(index, 1);
   }
 }
 
-var activeRequests = [];
+const activeRequests = [];
 
 function postJSON(url, data, cb) {
   console.log("POST " + url + " " + JSON.stringify(data));
   function reqListener() {
     console.log(this.response);
   }
-  var xhr = new XMLHttpRequest();
+  const xhr = new XMLHttpRequest();
   xhr.addEventListener("load", reqListener);
   xhr.open("POST", url);
 
@@ -30,7 +30,7 @@ function postJSON(url, data, cb) {
 
     if (this.status == 200) {
       if (cb) {
-        var res = JSON.parse(this.responseText);
+        const res = JSON.parse(this.responseText);
         cb(res);
       }
     } else {
@@ -55,12 +55,12 @@ function markTodo(hash, completed, cb) {
 }
 
 function clickTodo(e) {
-  var node = e.target;
+  const node = e.target;
   if (node.nodeName !== "INPUT")
     return;
 
-  var hash = node.getAttribute("value");
-  var markFinished = node.checked;
+  const hash = node.getAttribute("value");
+  const markFinished = node.checked;
   markTodo(hash, markFinished, function(res) {
     if (res.hash) {
       node.value = res.hash;
@@ -81,7 +81,7 @@ function mod(n, m) {
   return ((n % m) + m) % m;
 }
 
-var keySequence = [];
+const keySequence = [];
 
 function handleKeySequences(keyName) {
   keySequence.push(keyName);
@@ -89,7 +89,7 @@ function handleKeySequences(keyName) {
     keySequence.splice(0, keySequence.length - 10);
   }
 
-  var len = keySequence.length;
+  const len = keySequence.length;
   if (len > 1 && keySequence[len - 2] === "g" && keySequence[len - 1] === "g") {
     // vimlike: gg goes to top
     keySequence.length = 0;
@@ -113,20 +113,22 @@ function onKeyPress(event) {
         navigateKeys(-1);
         return false;
       case "x":
-        var elem = getFocusedElement();
+      {
+        const elem = getFocusedElement();
         if (elem.nodeName == "INPUT") {
           //elem.checked = !elem.checked;
             elem.click();
           return false;
         }
         break;
+      }
       case "Enter":
+      {
         // If in a TODO list, enter follows the link.
-        var elem = getFocusedElement();
+        const elem = getFocusedElement();
         if (elem.nodeName == "INPUT") {
-          var links = elem.parentElement.getElementsByTagName('a');
-          links = [].slice.call(links).filter((e) => {
-            var classes = e.classList;
+          const links = [].slice.call(elem.parentElement.getElementsByTagName('a')).filter((e) => {
+            const classes = e.classList;
             return !classes.contains("todo-context") && !classes.contains("todo-project");
           })
           if (links.length > 0) {
@@ -135,6 +137,7 @@ function onKeyPress(event) {
           }
         }
         break;
+      }
       case "G":
         navigateToLast();
         return false;
@@ -144,14 +147,13 @@ function onKeyPress(event) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  var todoList = document.getElementById("todo_list");
-  todoList.addEventListener("click", clickTodo, false);
+  const todoList = document.getElementById("todo_list");
   todoList.addEventListener("change", function(e) {
-    if (e.target.checked) {
-      e.target.parentElement.classList.add("todo-done");
-    } else {
-      e.target.parentElement.classList.remove("todo-done");
-    }
+    const classList = e.target.parentElement.classList;
+    if (e.target.checked)
+      classList.add("todo-done");
+    else
+      classList.remove("todo-done");
     clickTodo(e);
   }, false);
 
@@ -159,7 +161,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (activeRequests.length === 0)
       return;
 
-    var confirmationMessage = "There are pending requests; are you sure you want to navigate away?";
+    const confirmationMessage = "There are pending requests; are you sure you want to navigate away?";
     e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
     return confirmationMessage;              // Gecko, WebKit, Chrome <34
   });
