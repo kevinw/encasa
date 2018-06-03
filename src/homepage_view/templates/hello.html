@@ -33,15 +33,6 @@
     </div>
 </section>
 
-  <ul class="deadlines unstyled-list navigable-list">
-  {% for deadline in deadlines.deadlines %}
-    <li>
-      <a class="navigable-elem" href="{{ deadline.htmlLink }}">&#x23F0; {{ deadline.summary }}</a> 
-      {{ deadline.start.to_naive_date().unwrap()|humanize_date }}
-    </li>
-  {% endfor %}
-  </ul>
-
 <section class="section">
 <div class="container">
 
@@ -68,6 +59,15 @@
 
             </div>
             <div class="column">
+
+                  <ul class="deadlines unstyled-list navigable-list">
+                  {% for deadline in deadlines.deadlines %}
+                    <li>
+                      <a class="navigable-elem" href="{{ deadline.htmlLink }}">&#x23F0; {{ deadline.summary }}</a> 
+                      {{ deadline.start.to_naive_date().unwrap()|humanize_date }}
+                    </li>
+                  {% endfor %}
+                  </ul>
 
                   <ul id="todo_list" class="unstyled-list navigable-list">
                   {% for todo in todos %}

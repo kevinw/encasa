@@ -25,3 +25,4 @@ x (B) 2018-05-07 show all todos sorted by oldest->newest
 x (B) 2018-05-03 how to do "sub goals" for deadlines, todos, etc?
 x 2018-05-03 consider using a CSS framework like https://bulma.io/ for grids, etc.
 x rename the update_date function
+x make <!-- for="todo-{{- loop.index0 }}"> --> in hello.html a template comment
