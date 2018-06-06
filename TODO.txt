@@ -1,7 +1,6 @@
 don't filter todos in update_data
 rename the hide_in_index field of the LocalFileDesc struct
 (B) 2018-05-18 make editlocal:// links work on mac
-x (B) 2018-05-28 operations like \d when the server isn't running fail.
 (B) 2018-05-03 "install" working binaries to ~/bin and then use that in a service that reloads it when it changes?
 (B) 2018-05-03 social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
 (B) 2018-04-23 figure out how to get the server to run always in the background on windows

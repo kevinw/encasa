@@ -1,0 +1,3 @@
+#!/bin/bash -e
+
+CARGO_TARGET_DIR=target/sudo_server cargo run --release -- -p 80 &
