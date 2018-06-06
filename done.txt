@@ -26,3 +26,5 @@ x (B) 2018-05-03 how to do "sub goals" for deadlines, todos, etc?
 x 2018-05-03 consider using a CSS framework like https://bulma.io/ for grids, etc.
 x rename the update_date function
 x make <!-- for="todo-{{- loop.index0 }}"> --> in hello.html a template comment
+x is there a way to find crates you aren't using?
+x freeze versions in Cargo.toml

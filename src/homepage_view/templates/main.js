@@ -29,14 +29,13 @@ function postJSON(url, data, cb) {
     removeElement(activeRequests, xhr);
 
     if (this.status == 200) {
-      if (cb) {
         const res = JSON.parse(this.responseText);
-        cb(res);
-      }
+        if (res == null)
+            showNotification("Could not parse JSON: " + this.responseText);
+        else if (cb)
+            cb(res);
     } else {
-      console.error(this);
-      console.error(this.responseText);
-      alert(this.responseText);
+      showNotification(this.responseText || "An error occurred.");
     }
   };
 
@@ -146,6 +145,14 @@ function onKeyPress(event) {
   }
 }
 
+var notification;
+
+function showNotification(message) {
+    console.error("notification: " + message);
+    notification.getElementsByClassName("notification-message")[0].innerText = message;
+    notification.style.display = "";
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   const todoList = document.getElementById("todo_list");
   todoList.addEventListener("change", function(e) {
@@ -167,6 +174,12 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   document.addEventListener('keypress', onKeyPress);
+
+  notification = document.getElementsByClassName("notification")[0];
+  const deleteButton = notification.getElementsByClassName("delete")[0];
+  deleteButton.addEventListener("click", function() {
+      notification.style.display = "none";
+  });
 });
 
 function _navigate(fn) {
