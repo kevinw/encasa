@@ -1,5 +1,7 @@
 use actix;
-use actix_web::{http, server, App, Query, HttpResponse, Json, Path, middleware};
+use actix_web::{pred, http, server, App, Query, HttpResponse,
+    Json, Path, middleware, Error, HttpRequest};
+use actix_web::http::Method;
 use failure;
 use homepage_view;
 use env_logger;
@@ -67,6 +69,11 @@ impl IndexQuery {
     }
 }
 
+fn p404(req: HttpRequest) -> Result<HttpResponse, Error> {
+    println!("{:?}lll", req);
+    Ok(HttpResponse::NotFound().content_type("text/plain").body("Not Found"))
+}
+
 pub fn run_server(port_str: &str) {
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
@@ -85,6 +92,13 @@ pub fn run_server(port_str: &str) {
             })
             .route("/actions/archive_finished", http::Method::POST, archive_finished)
             .route("/", http::Method::GET, index)
+            .default_resource(|r| {
+                // 404 for GET request
+                r.method(Method::GET).f(p404);
+
+                // all requests that are not `GET`
+                r.route().filter(pred::Not(pred::Get())).f(|_req| HttpResponse::MethodNotAllowed());
+            })
     }).bind(&addr)
         .unwrap()
         .shutdown_timeout(1)
