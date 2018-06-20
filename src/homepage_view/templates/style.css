@@ -4,6 +4,8 @@ body {
 h1 {
   padding-left: 15px;
 }
+.deadlines { padding-top: 15px; }
+
 .deadlines li { font-size: 16.5px; }
 .unstyled-list {
   list-style: none;
@@ -52,11 +54,19 @@ h1 a:hover { text-decoration: underline; }
   color: white;
   border-radius: 5px;
   padding: 0 4px 0 4px;
+  animation: red-alert linear 1s infinite;
 }
+
+@keyframes red-alert {
+    0% { background-color: red; }
+    50% { background-color: #ffeeee; }
+    100% { background-color: red; }
+}
+
 .due-date-outer.due-date-today { color: red; }
 .due-date-outer.due-date-future { color: grey; }
 .todo-done .due-date-outer { display: none; }
 
 .priority-label { font-size: 70%; color: grey; }
-.todo-priority-0 { font-size: 150%; }
+.todo-priority-0 { font-size: 160%; }
 .todo-priority-1 { font-size: 120%; }

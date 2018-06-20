@@ -70,20 +70,21 @@ fn deserialize_humantime<'a, D>(deserializer: D) -> std::result::Result<i64, D::
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LocalFileDesc {
     #[serde(default)] pub name: String,
+
     pub path: String,
+
     #[serde(default)] pub todos: bool,
 
     #[serde(default)]
     #[serde(deserialize_with = "deserialize_humantime")]
     pub frequency_goal_seconds: i64,
 
-    #[serde(default)]
-    pub auto_project: String,
+    #[serde(default)] pub auto_project: String,
 
-    #[serde(default)]
-    pub hide_in_index: bool,
+    #[serde(default)] pub hide_in_index: bool,
+
+    #[serde(default)] pub git: String,
 }
-
 
 impl LocalFileDesc {
     pub fn expanded_path(&self) -> String {
@@ -119,11 +120,47 @@ pub struct LocalFileDescWithState {
     pub file_is_showing_todos: bool, // TODO this will go away once the view crate is doing the filtering
 }
 
+fn get_last_commit_date(working_dir: &str) -> std::time::SystemTime {
+    use std::process::Command;
+
+    // '%at': author date, UNIX timestamp
+    // '%aI': author date, strict ISO 8601 format
+
+    let git_command = "git log -1 --pretty=format:%at";
+
+    let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+                .current_dir(working_dir)
+                .args(&["/C", git_command])
+                .output()
+                .expect("failed to execute process")
+    } else {
+        Command::new("sh")
+                .current_dir(working_dir)
+                .arg("-c")
+                .arg(git_command)
+                .output()
+                .expect("failed to execute process")
+    };
+
+    let hello = output.stdout;
+    let s = String::from_utf8(hello).unwrap();
+    let secs:u64 = s.parse().unwrap();
+
+    let duration = std::time::Duration::new(secs, 0);
+
+    SystemTime::UNIX_EPOCH + duration
+}
+
 impl LocalFileDescWithState {
     pub fn last_modified(&self) -> SystemTime {
-        assert!(!&self.states.is_empty());
-        let last_state = &self.states[&self.states.len() - 1];
-        last_state.modification_time
+        if !self.desc.git.is_empty() {
+            get_last_commit_date(&shellexpand::tilde(&self.desc.git).to_string())
+        } else {
+            assert!(!&self.states.is_empty());
+            let last_state = &self.states[&self.states.len() - 1];
+            last_state.modification_time
+        }
     }
 
     pub fn duration_since_modified(&self) -> std::time::Duration {

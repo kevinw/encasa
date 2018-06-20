@@ -1,12 +1,3 @@
-don't filter todos in update_data
-rename the hide_in_index field of the LocalFileDesc struct
 (B) 2018-05-18 make editlocal:// links work on mac
-(B) 2018-05-03 "install" working binaries to ~/bin and then use that in a service that reloads it when it changes?
-(B) 2018-05-03 social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
-(B) 2018-04-23 figure out how to get the server to run always in the background on windows
-(B) 2018-05-30 automatically download @read PDFs and rewrite their links as local?
-2018-05-03 deadline links could be the first link in the description
-2018-05-03 TO READ folder on desktop--treat some folders as a TODO list in themselves?
-2018-05-03 last git commit as "last modified" date for project directories - `git log -1 --format=%cd` would do it
-2018-05-03 use (something like) https://github.com/borisyankov/react-sparklines for todo files, file sizes
-2018-05-03 some kind of "streak" system, for example keto
+(C) 2018-06-18 push notifications for calendar events https://developers.google.com/calendar/v3/push
+(C) 2018-06-18 investigate viability of dynamic library for templates
