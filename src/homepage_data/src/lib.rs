@@ -27,6 +27,7 @@ use std::fs::{File, OpenOptions};
 use std::path::{Path};
 use std::io::{Read, Write, BufReader, BufRead};
 use std::time::SystemTime;
+use std::process::Command;
 
 use failure::{ResultExt};
 
@@ -120,35 +121,46 @@ pub struct LocalFileDescWithState {
     pub file_is_showing_todos: bool, // TODO this will go away once the view crate is doing the filtering
 }
 
-fn get_last_commit_date(working_dir: &str) -> std::time::SystemTime {
-    use std::process::Command;
-
-    // '%at': author date, UNIX timestamp
-    // '%aI': author date, strict ISO 8601 format
-
-    let git_command = "git log -1 --pretty=format:%at";
-
+fn run_shell_command(command: &str, working_dir: &str) -> String {
     let output = if cfg!(target_os = "windows") {
         Command::new("cmd")
                 .current_dir(working_dir)
-                .args(&["/C", git_command])
+                .args(&["/C", command])
                 .output()
                 .expect("failed to execute process")
     } else {
         Command::new("sh")
                 .current_dir(working_dir)
                 .arg("-c")
-                .arg(git_command)
+                .arg(command)
                 .output()
                 .expect("failed to execute process")
     };
 
-    let hello = output.stdout;
-    let s = String::from_utf8(hello).unwrap();
+    String::from_utf8_lossy(&output.stdout).into_owned()
+
+}
+
+pub fn update_deadlines() -> Result<(), failure::Error> {
+    let stdout_text = run_shell_command("python3 scrape_events.py", "/Users/kevin/src/encasa/tools/calscrape/");
+    println!("{}", stdout_text);
+    lazy_static! {
+        static ref RE: regex::Regex = regex::Regex::new(r"saved \d+ events").unwrap();
+    }
+    if RE.is_match(&stdout_text) {
+        Ok(())
+    } else {
+        Err(format_err!("python command did not return successfully"))
+    }
+}
+
+fn get_last_commit_date(working_dir: &str) -> std::time::SystemTime {
+    // '%at': author date, UNIX timestamp
+    // '%aI': author date, strict ISO 8601 format
+    let git_command = "git log -1 --pretty=format:%at";
+    let s = run_shell_command(git_command, working_dir);
     let secs:u64 = s.parse().unwrap();
-
     let duration = std::time::Duration::new(secs, 0);
-
     SystemTime::UNIX_EPOCH + duration
 }
 

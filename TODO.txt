@@ -1,3 +1,1 @@
 (B) 2018-05-18 make editlocal:// links work on mac
-(C) 2018-06-18 push notifications for calendar events https://developers.google.com/calendar/v3/push
-(C) 2018-06-18 investigate viability of dynamic library for templates

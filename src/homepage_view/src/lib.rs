@@ -149,6 +149,17 @@ pub struct SearchParams {
     pub sort_by: String,
 }
 
+impl Default for SearchParams {
+    fn default() -> SearchParams {
+        SearchParams {
+            context: String::new(),
+            project: String::new(),
+            search: String::new(),
+            sort_by: String::new(),
+        }
+    }
+}
+
 
 pub fn render(
     cached_data: &CachedData,

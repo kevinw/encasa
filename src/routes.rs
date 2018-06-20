@@ -3,20 +3,30 @@ use actix_web::{pred, http, server, App, Query, HttpResponse,
     Json, Path, middleware, Error, HttpRequest};
 use actix_web::http::Method;
 use failure;
-use homepage_view;
+use homepage_view::{render, SearchParams};
 use env_logger;
 use std;
 
-use homepage_data::{update_data, mark_todo_completed, archive_finished_tasks};
+use homepage_data::{update_data, mark_todo_completed, archive_finished_tasks,
+    update_deadlines};
+
+fn _render_index(files_to_include: &Vec<String>, search_params: &SearchParams) -> Result<HttpResponse, failure::Error> {
+    let cached_data = update_data(files_to_include)?;
+    let html = render(&cached_data, search_params)?;
+    Ok(HttpResponse::Ok().content_type("text/html").body(html))
+}
+
+fn update_deadlines_route(_info: Path<()>) -> Result<HttpResponse, failure::Error> {
+    update_deadlines()?;
+    _render_index(&vec![], &SearchParams::default())
+}
 
 fn index(query: Query<IndexQuery>) -> Result<HttpResponse, failure::Error> {
     let mut files_to_include = vec![];
     if !query.file.is_empty() {
         files_to_include.push(query.file.clone());
     }
-    let cached_data = update_data(&files_to_include)?;
-    let html = homepage_view::render(&cached_data, &query.to_search_params())?;
-    Ok(HttpResponse::Ok().content_type("text/html").body(html))
+    _render_index(&files_to_include, &query.to_search_params())
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -59,8 +69,8 @@ pub struct IndexQuery {
 }
 
 impl IndexQuery {
-    fn to_search_params(&self) -> homepage_view::SearchParams {
-        homepage_view::SearchParams {
+    fn to_search_params(&self) -> SearchParams {
+        SearchParams {
             context: self.context.clone(),
             project: self.project.clone(),
             search: self.search.clone(),
@@ -91,6 +101,7 @@ pub fn run_server(port_str: &str) {
                     .limit(4096); // <- limit size of the payload
             })
             .route("/actions/archive_finished", http::Method::POST, archive_finished)
+            .route("/update_deadlines", http::Method::GET, update_deadlines_route)
             .route("/", http::Method::GET, index)
             .default_resource(|r| {
                 // 404 for GET request
