@@ -6,6 +6,7 @@ extern crate homepage_data;
 extern crate regex;
 extern crate linkify;
 extern crate time;
+extern crate failure;
 
 use homepage_data::{CachedData, LocalFileDescWithState, Deadlines, TaskWithContext};
 use homepage_data::todo::Task;
@@ -13,6 +14,10 @@ use homepage_data::datetools::{DateWhen, duration_relative_to_today};
 use homepage_data::datetools;
 
 use askama::Template;
+
+pub struct RenderOpts {
+    show_priority_text_label: bool,
+}
 
 pub mod filters {
     use regex::Regex;
@@ -115,11 +120,11 @@ pub mod filters {
 #[derive(Template)]
 #[template(path = "hello.html")]
 struct HelloTemplate<'a> {
-    json_dump: &'a str,
     todos_count: usize,
     local_files: &'a Vec<LocalFileDescWithState>,
     todos: &'a Vec<TaskWithContext>,
     deadlines: &'a Deadlines,
+    render_opts: &'a RenderOpts,
 }
 
 fn due_date_sort(a: &Task) -> i32 {
@@ -141,15 +146,26 @@ pub struct SearchParams {
     pub context: String,
     pub project: String,
     pub search: String,
+    pub sort_by: String,
+}
+
+impl Default for SearchParams {
+    fn default() -> SearchParams {
+        SearchParams {
+            context: String::new(),
+            project: String::new(),
+            search: String::new(),
+            sort_by: String::new(),
+        }
+    }
 }
 
 
 pub fn render(
     cached_data: &CachedData,
-    json_dump: &str,
     query_params: &SearchParams,
     
-    ) -> String {
+    ) -> Result<String, failure::Error> {
 
     let mut todos_sorted = cached_data.todos.clone();
 
@@ -166,17 +182,27 @@ pub fn render(
         if !query_params.search.is_empty() {
             todos_sorted.retain(|t| t.task.subject.contains(&query_params.search));
         }
+        if !query_params.sort_by.is_empty() {
+            match query_params.sort_by.as_ref() {
+                "create_date" => {
+                    todos_sorted.sort_unstable_by_key(|t| t.task.create_date);
+                }
+                _ => {
+                    return Err(failure::err_msg(format!("invalid sort_by key: '{}'", query_params.sort_by)));
+                }
+            }
+        }
     }
 
     let hello = HelloTemplate {
-        json_dump,
         todos_count: cached_data.todos_count,
         local_files: &cached_data.local_files,
         todos: &todos_sorted,
         deadlines: &cached_data.deadlines,
+        render_opts: &RenderOpts { show_priority_text_label: false },
     };
 
-    hello.render().unwrap()
+    Ok(hello.render().unwrap())
 }
 
 #[cfg(test)]

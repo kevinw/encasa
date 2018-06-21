@@ -1,18 +1,32 @@
 use actix;
-use actix_web::{http, server, App, Query, HttpResponse, Json, Path, middleware};
-
+use actix_web::{pred, http, server, App, Query, HttpResponse,
+    Json, Path, middleware, Error, HttpRequest};
+use actix_web::http::Method;
 use failure;
-use homepage_data::{update_data, mark_todo_completed, archive_finished_tasks};
-use serde_json;
-use homepage_view;
+use homepage_view::{render, SearchParams};
 use env_logger;
 use std;
 
-fn index(query: Query<IndexQuery>) -> Result<HttpResponse, failure::Error> {
-    let cached_data = update_data()?;
-    let serialized = serde_json::to_string_pretty(&cached_data).unwrap();
-    let html = homepage_view::render(&cached_data, &serialized, &query.to_search_params());
+use homepage_data::{update_data, mark_todo_completed, archive_finished_tasks,
+    update_deadlines};
+
+fn _render_index(files_to_include: &Vec<String>, search_params: &SearchParams) -> Result<HttpResponse, failure::Error> {
+    let cached_data = update_data(files_to_include)?;
+    let html = render(&cached_data, search_params)?;
     Ok(HttpResponse::Ok().content_type("text/html").body(html))
+}
+
+fn update_deadlines_route(_info: Path<()>) -> Result<HttpResponse, failure::Error> {
+    update_deadlines()?;
+    _render_index(&vec![], &SearchParams::default())
+}
+
+fn index(query: Query<IndexQuery>) -> Result<HttpResponse, failure::Error> {
+    let mut files_to_include = vec![];
+    if !query.file.is_empty() {
+        files_to_include.push(query.file.clone());
+    }
+    _render_index(&files_to_include, &query.to_search_params())
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -50,16 +64,24 @@ pub struct IndexQuery {
     #[serde(default)] pub context: String,
     #[serde(default)] pub project: String,
     #[serde(default)] pub search: String,
+    #[serde(default)] pub sort_by: String,
+    #[serde(default)] pub file: String,
 }
 
 impl IndexQuery {
-    fn to_search_params(&self) -> homepage_view::SearchParams {
-        homepage_view::SearchParams {
+    fn to_search_params(&self) -> SearchParams {
+        SearchParams {
             context: self.context.clone(),
             project: self.project.clone(),
             search: self.search.clone(),
+            sort_by: self.sort_by.clone(),
         }
     }
+}
+
+fn p404(req: HttpRequest) -> Result<HttpResponse, Error> {
+    println!("{:?}lll", req);
+    Ok(HttpResponse::NotFound().content_type("text/plain").body("Not Found"))
 }
 
 pub fn run_server(port_str: &str) {
@@ -79,7 +101,15 @@ pub fn run_server(port_str: &str) {
                     .limit(4096); // <- limit size of the payload
             })
             .route("/actions/archive_finished", http::Method::POST, archive_finished)
+            .route("/update_deadlines", http::Method::GET, update_deadlines_route)
             .route("/", http::Method::GET, index)
+            .default_resource(|r| {
+                // 404 for GET request
+                r.method(Method::GET).f(p404);
+
+                // all requests that are not `GET`
+                r.route().filter(pred::Not(pred::Get())).f(|_req| HttpResponse::MethodNotAllowed());
+            })
     }).bind(&addr)
         .unwrap()
         .shutdown_timeout(1)

@@ -27,6 +27,7 @@ use std::fs::{File, OpenOptions};
 use std::path::{Path};
 use std::io::{Read, Write, BufReader, BufRead};
 use std::time::SystemTime;
+use std::process::Command;
 
 use failure::{ResultExt};
 
@@ -69,18 +70,22 @@ fn deserialize_humantime<'a, D>(deserializer: D) -> std::result::Result<i64, D::
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LocalFileDesc {
-    #[serde(default)] name: String,
+    #[serde(default)] pub name: String,
+
     pub path: String,
-    #[serde(default)] todos: bool,
+
+    #[serde(default)] pub todos: bool,
 
     #[serde(default)]
     #[serde(deserialize_with = "deserialize_humantime")]
     pub frequency_goal_seconds: i64,
 
-    #[serde(default)]
-    pub auto_project: String,
-}
+    #[serde(default)] pub auto_project: String,
 
+    #[serde(default)] pub hide_in_index: bool,
+
+    #[serde(default)] pub git: String,
+}
 
 impl LocalFileDesc {
     pub fn expanded_path(&self) -> String {
@@ -113,13 +118,61 @@ pub struct LocalFileDescWithState {
     pub desc: LocalFileDesc,
     pub states: Vec<FileState>,
     pub update_state: UpdateState,
+    pub file_is_showing_todos: bool, // TODO this will go away once the view crate is doing the filtering
+}
+
+fn run_shell_command(command: &str, working_dir: &str) -> String {
+    let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+                .current_dir(working_dir)
+                .args(&["/C", command])
+                .output()
+                .expect("failed to execute process")
+    } else {
+        Command::new("sh")
+                .current_dir(working_dir)
+                .arg("-c")
+                .arg(command)
+                .output()
+                .expect("failed to execute process")
+    };
+
+    String::from_utf8_lossy(&output.stdout).into_owned()
+
+}
+
+pub fn update_deadlines() -> Result<(), failure::Error> {
+    let stdout_text = run_shell_command("python3 scrape_events.py", "/Users/kevin/src/encasa/tools/calscrape/");
+    println!("{}", stdout_text);
+    lazy_static! {
+        static ref RE: regex::Regex = regex::Regex::new(r"saved \d+ events").unwrap();
+    }
+    if RE.is_match(&stdout_text) {
+        Ok(())
+    } else {
+        Err(format_err!("python command did not return successfully"))
+    }
+}
+
+fn get_last_commit_date(working_dir: &str) -> std::time::SystemTime {
+    // '%at': author date, UNIX timestamp
+    // '%aI': author date, strict ISO 8601 format
+    let git_command = "git log -1 --pretty=format:%at";
+    let s = run_shell_command(git_command, working_dir);
+    let secs:u64 = s.parse().unwrap();
+    let duration = std::time::Duration::new(secs, 0);
+    SystemTime::UNIX_EPOCH + duration
 }
 
 impl LocalFileDescWithState {
     pub fn last_modified(&self) -> SystemTime {
-        assert!(!&self.states.is_empty());
-        let last_state = &self.states[&self.states.len() - 1];
-        last_state.modification_time
+        if !self.desc.git.is_empty() {
+            get_last_commit_date(&shellexpand::tilde(&self.desc.git).to_string())
+        } else {
+            assert!(!&self.states.is_empty());
+            let last_state = &self.states[&self.states.len() - 1];
+            last_state.modification_time
+        }
     }
 
     pub fn duration_since_modified(&self) -> std::time::Duration {
@@ -376,7 +429,7 @@ fn get_deadlines() -> Result<Deadlines, failure::Error> {
     Ok(deadlines)
 }
 
-pub fn update_data() -> Result<CachedData, failure::Error> {
+pub fn update_data(files_to_include: &Vec<String>) -> Result<CachedData, failure::Error> {
     let mut todos_count:usize = 0;
     let mut all_todos:Vec<TaskWithContext> = vec![];
     let mut files:Vec<LocalFileDescWithState> = vec![];
@@ -384,7 +437,14 @@ pub fn update_data() -> Result<CachedData, failure::Error> {
     for local_file in &HomepageMeta::from_local_config()?.local {
         let path = local_file.expanded_path();
         let history = update_file_history(&path)?;
-        if local_file.todos {
+
+        let file_is_showing_todos = local_file.todos && if local_file.hide_in_index {
+            files_to_include.contains(&local_file.name)
+        } else {
+            files_to_include.is_empty() || files_to_include.contains(&local_file.name)
+        };
+
+        if file_is_showing_todos {
             let todos = parse_todo_file(&path)?;
             todos_count += todos.iter().filter(|c| !c.finished && c.priority == 0).count();
             for todo in &todos {
@@ -415,6 +475,7 @@ pub fn update_data() -> Result<CachedData, failure::Error> {
             desc: local_file.clone(),
             states: history.states,
             update_state,
+            file_is_showing_todos,
         });
     }
 

@@ -2,58 +2,123 @@
 <html>
 <head>
   <meta charset="utf-8" /> 
-  <title>TODO ({{ todos_count }})</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TODO {% if todos_count > 0 %}({{ todos_count }}){% endif %}</title>
   <base target="_parent">
   <style>
+    {% include "bulma.min.css" %}
     {% include "style.css" %}
   </style>
 </head>
 <body>
-  <h1><a href="/">TODO <span id="total_todos_count">({{ todos_count }})</span></a></h1>
 
-  <ul class="deadlines unstyled-list navigable-list">
-  {% for deadline in deadlines.deadlines %}
-    <li>
-      <a class="navigable-elem" href="{{ deadline.htmlLink }}">&#x23F0; {{ deadline.summary }}</a> 
-      {{ deadline.start.to_naive_date().unwrap()|humanize_date }}
-    </li>
-  {% endfor %}
-  </ul>
+<section class="section">
+    <div class="level">
+      <div class="level-left">
+          <h1 class="title">
+            <a href="/">TODO
+                <span id="total_todos_count">
+                    {% if todos_count > 0 %}
+                        ({{ todos_count }})
+                    {% endif %}
+                </span>
+            </a>
+          </h1>
+      </div>
+      <div class="level-right nav">
+          <ul>  
+              <li><a href="/?sort_by=create_date">stale</a></li>
+          </ul>
+      </div>
+    </div>
+</section>
+
+<section class="section" style="padding-top: 0px;">
+<div class="container">
+
+        <div class="columns">
+            <div class="column is-one-fifth">
+
+                  <ul class="unstyled-list navigable-list">
+                  {% for local_file in local_files %}
+                    <li{% if local_file.needs_update() %} class="needs-update"{% endif %}>
+                        {% if local_file.file_is_showing_todos %}
+                            <span style="padding-left: 3px;">✔︎</span>
+                        {% else if local_file.desc.todos %}
+                            <a href="/?file={{ local_file.desc.name }}">☐</a>
+                        {% else %}
+                        <span style="opacity: 0;">☐</span>
+                        {% endif %}
+                      <a class="navigable-elem" href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.readable_name() }}</a>
+                      <span class="last-updated{% if local_file.needs_update() %} local-file-needs-update{% endif %}">
+                        ✎ {{ local_file.duration_since_modified()|humanize_duration }}
+                      </span>
+                    </li>
+                  {% endfor %}
+                  </ul>
 
 
-  <ul class="unstyled-list navigable-list">
-  {% for local_file in local_files %}
-    <li{% if local_file.needs_update() %} class="needs-update"{% endif %}>
-      <a class="navigable-elem" href="editlocal://{{ local_file.desc.path }}">{{ local_file.desc.readable_name() }}</a>
-      <span class="last-updated{% if local_file.needs_update() %} local-file-needs-update{% endif %}">
-        last updated {{ local_file.duration_since_modified()|humanize_duration }}
-      </span>
-    </li>
-  {% endfor %}
-  </ul>
+                  <ul class="deadlines unstyled-list navigable-list">
+                  {% for deadline in deadlines.deadlines %}
+                    <li>
+                      <a class="navigable-elem" href="{{ deadline.htmlLink }}">&#x23F0; {{ deadline.summary }}</a> 
+                      {{ deadline.start.to_naive_date().unwrap()|humanize_date }}
+                    </li>
+                  {% endfor %}
+                  </ul>
 
-  <ul id="todo_list" class="unstyled-list navigable-list">
-  {% for todo in todos %}
-      <li class="todo-priority-{{ todo.task.priority }}{% if todo.task.finished %} todo-done{% endif %}">
-      <input class="navigable-elem" type="checkbox" id="todo-{{- loop.index0 }}" value="{{ todo.task.calc_hash() }}"{% if todo.task.finished %} checked{% endif %}>
-      <label> <!-- for="todo-{{- loop.index0 }}"> -->
-        <span class="priority-label">{{ todo.task.priority_label() }}</span>
-        {{ todo.subject_with_auto_project()|linkify|spanify|safe }}
-        {% match todo.task.due_date %}
-        {% when Some with (due_date) %}
-          <span class="due-date-outer due-date-{{ due_date|date_when_css_class }}">
-            due <span class="due-date">{{ due_date|humanize_date }}</span>
-          </span>
-        {% when None %}
-        {% endmatch %}
-      </label>
-    </li>
-  {% endfor %}
-  </ul>
+                  <div class="buttons has-addons is-right">
+                    <a href="/update_deadlines" class="button is-small">Update</a>
+                  </div>
 
-  <!--
-  <pre>{{ json_dump }}</pre>
-  -->
+            </div>
+            <div class="column">
+
+
+<div class="notification is-danger" style="display: none;">
+  <button class="delete"></button>
+  <span class="notification-message"></span>
+</div>
+
+                  <ul id="todo_list" class="unstyled-list navigable-list">
+                  {% for todo in todos %}
+                      <li class="todo-priority-{{ todo.task.priority }}{% if todo.task.finished %} todo-done{% endif %}">
+                          <input class="navigable-elem" type="checkbox" name="todo-{{-  todo.task.calc_hash() }}" value="{{ todo.task.calc_hash() }}"{% if todo.task.finished %} checked{% endif %}>
+                      <label>
+                        {% if render_opts.show_priority_text_label %}
+                            <span class="priority-label">{{ todo.task.priority_label() }}</span>
+                        {% endif %}
+                        {{ todo.subject_with_auto_project()|linkify|spanify|safe }}
+                        {% match todo.task.due_date %}
+                        {% when Some with (due_date) %}
+                          <span class="due-date-outer due-date-{{ due_date|date_when_css_class }}">
+                            due <span class="due-date">{{ due_date|humanize_date }}</span>
+                          </span>
+                        {% when None %}
+                        {% endmatch %}
+                      </label>
+                    </li>
+                  {% endfor %}
+                  </ul>
+
+            </div>
+
+        </div>
+
+</div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <p>
+      <strong>encasa</strong> by <a href="https://kev.town">Kevin Watters</a>.
+      
+      The <a href="https://github.com/kevinw/encasa">source code</a> is licensed <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
+      </p>
+    </div>
+  </div>
+</footer>
 
 <script>
 {% include "main.js" %}

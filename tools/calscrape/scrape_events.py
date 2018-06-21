@@ -8,6 +8,7 @@ from httplib2 import Http
 from oauth2client import file, client, tools
 from pprint import pformat
 import datetime
+import os.path
 
 # Setup the Calendar API
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
@@ -67,6 +68,7 @@ import json
 json_output = json.dumps(output, indent=4, separators=(',', ': '))
 print(json_output)
 
-json_path = "c:\\Users\\kevin\\deadlines.json"
-open(json_path, "w").write(json_output)
+json_path = os.path.expanduser("~/deadlines.json")
+with open(json_path, "w") as f:
+    f.write(json_output)
 print("saved", count, "events to", json_path)

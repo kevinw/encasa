@@ -21,3 +21,27 @@ x 2018-05-03 how to capture festival submissions for things like http://virtualr
 
 x test
 x (A) 2018-05-07 setup travis for unit tests https://github.com/rnleach/sonde/blob/master/.travis.yml
+x (B) 2018-05-07 show all todos sorted by oldest->newest
+x (B) 2018-05-03 how to do "sub goals" for deadlines, todos, etc?
+x 2018-05-03 consider using a CSS framework like https://bulma.io/ for grids, etc.
+x rename the update_date function
+x make <!-- for="todo-{{- loop.index0 }}"> --> in hello.html a template comment
+x is there a way to find crates you aren't using?
+x freeze versions in Cargo.toml
+
+x (B) 2018-05-28 operations like \d when the server isn't running fail.
+x (B) 2018-05-03 "install" working binaries to ~/bin and then use that in a service that reloads it when it changes?
+x 2018-05-03 use (something like) https://github.com/borisyankov/react-sparklines for todo files, file sizes
+x 2018-05-03 some kind of "streak" system, for example keto
+x 2018-05-03 last git commit as "last modified" date for project directories - `git log -1 --format=%cd` would do it
+x 2018-05-03 TO READ folder on desktop--treat some folders as a TODO list in themselves?
+x 2018-05-03 deadline links could be the first link in the description
+x don't filter todos in update_data
+x rename the hide_in_index field of the LocalFileDesc struct
+x (B) 2018-05-30 automatically download @read PDFs and rewrite their links as local?
+x (B) 2018-04-23 figure out how to get the server to run always in the background on windows
+x (B) 2018-05-03 social checkins - people get a frequency goal? maybe each person gets a file, and it's just like a journal
+x (B) 2018-06-18 move calendar items to the left
+x (B) 2018-06-18 flash overdue items red with animated CSS
+x (C) 2018-06-18 add "update calendar" link for updating via a subcommand python
+x (C) 2018-06-18 investigate viability of dynamic library for templates
