@@ -1,5 +1,5 @@
-#[macro_use] extern crate askama;
 #[macro_use] extern crate lazy_static;
+extern crate askama;
 extern crate serde;
 extern crate chrono;
 extern crate homepage_data;
