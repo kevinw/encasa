@@ -3,7 +3,7 @@ Windows Registry Editor Version 5.00
 [HKEY_CLASSES_ROOT\editlocal]
 "URL Protocol"=""
 @="URL:Edit Local Protocol"
-"DefaultIcon"="\"C:\\Program Files (x86)\\vim\\vim80\\gvim.exe\",1"
+"DefaultIcon"="\"C:\\Program Files (x86)\\vim\\vim81\\gvim.exe\",1"
 
 [HKEY_CLASSES_ROOT\editlocal\shell]
 
