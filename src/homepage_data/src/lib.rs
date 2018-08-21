@@ -340,7 +340,9 @@ pub fn mark_todo_completed(hash: &str, finished: bool) -> Result<String, failure
                 use std::hash::{Hash, Hasher};
                 let mut hasher = std::collections::hash_map::DefaultHasher::new();
                 original_contents.hash(&mut hasher);
-                let mut backup_path = shellexpand::tilde("~/.homepage/backups/").to_string();
+                let backup_dir = shellexpand::tilde("~/.homepage/backups/");
+                let mut backup_path = backup_dir.to_string();
+                std::fs::create_dir_all(&std::path::Path::new(&backup_dir.to_string())).context(format!("could not create backup path {}", backup_path))?;
                 backup_path.push_str(&hasher.finish().to_string());
                 let mut f = File::create(&backup_path).context(format!("could not create backup path {}", backup_path))?;
                 f.write_all(&original_contents.into_bytes())?;
