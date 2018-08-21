@@ -1,4 +1,6 @@
 language: rust
+rust:
+    - beta
 cache: cargo
 script:
   - cargo build --verbose --all
