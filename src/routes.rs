@@ -98,14 +98,15 @@ pub fn run_server(port_str: &str) {
             .resource("/todos", |r| {
                 r.method(http::Method::POST)
                     .with(post_todos)
-                    .limit(4096); // <- limit size of the payload
+                    //.limit(4096); // <- limit size of the payload
+                    ;
             })
             .route("/actions/archive_finished", http::Method::POST, archive_finished)
             .route("/update_deadlines", http::Method::GET, update_deadlines_route)
             .route("/", http::Method::GET, index)
             .default_resource(|r| {
                 // 404 for GET request
-                r.method(Method::GET).f(p404);
+                r.method(Method::GET);//.f(p404);
 
                 // all requests that are not `GET`
                 r.route().filter(pred::Not(pred::Get())).f(|_req| HttpResponse::MethodNotAllowed());
