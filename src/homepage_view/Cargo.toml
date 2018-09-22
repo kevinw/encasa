@@ -4,11 +4,11 @@ version = "0.1.0"
 authors = ["Kevin Watters <kevinwatters@gmail.com>"]
 
 [build-dependencies]
-askama = "0.6.3"
+askama = "0.7"
 
 [dependencies]
 homepage_data = { path = "../homepage_data" }
-askama = "0.6.3"
+askama = "0.7"
 
 serde = "*"
 serde_derive = "*"

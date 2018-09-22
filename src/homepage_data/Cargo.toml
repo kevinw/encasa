@@ -12,7 +12,7 @@ time = "*"
 chrono = { version = "*", features = ["serde"] }
 shellexpand = "*"
 lazy_static = { version = "1.0.0" }
-nom = { version = "^3.2" }
+nom = { version = "3.2.1" }
 regex = { version = "^0.2" }
 humantime = "*"
 tempfile = "*"

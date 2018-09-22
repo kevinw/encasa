@@ -30,3 +30,9 @@ failure = "*"
 actix-web = "*"
 actix = "*"
 env_logger = "*"
+
+systray = { version = "*" }
+
+# [features]
+# win32-systray = ["systray"]
+# foo = []

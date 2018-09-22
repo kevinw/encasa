@@ -1,2 +1,12 @@
-(A) 2018-05-03 "install" working binaries to ~/bin and then use that in a service that reloads it when it changes?
-(B) 2018-05-18 make editlocal:// links work on mac
+a "work schedule" mode where the todo list is hidden at startup, so that opening browser windows at work doesn't show the todo list right away
+add dates to items that don't have them
+things due in a few days that have been around for awhile should be flashing red
+finish google.auth upgrade of calscrape
+2018-05-18 make editlocal:// links work on mac
+run in background as service on windows
+when zooming into a +project or @action, hide it from view in each todo item, and show it in the header as a breadcrumb
+collapse auto_projects in files into "...and 5 more" on the main page, and show the highest priority one?
+move to a hash of the file path for filetime modification meta file. it's annoying to have side-by-side files
+show x days since last instagram / twitter / blog post
+emails to self become encasa notes
+detect if encasa hasn't been shown in more than a day, show a red banner

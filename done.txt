@@ -45,3 +45,5 @@ x (B) 2018-06-18 move calendar items to the left
 x (B) 2018-06-18 flash overdue items red with animated CSS
 x (C) 2018-06-18 add "update calendar" link for updating via a subcommand python
 x (C) 2018-06-18 investigate viability of dynamic library for templates
+
+x (A) 2018-05-03 "install" working binaries to ~/bin and then use that in a service that reloads it when it changes?
